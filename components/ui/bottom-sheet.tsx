@@ -62,7 +62,7 @@ const styles = StyleSheet.create({
     borderTopLeftRadius: 16,
     borderTopRightRadius: 16,
     padding: 16,
-    paddingBottom: 0,
+    paddingBottom: 16,
 
     gap: 20,
     shadowColor: "#000",

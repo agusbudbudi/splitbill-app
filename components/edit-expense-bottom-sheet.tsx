@@ -1,6 +1,10 @@
+import { Poppins } from "@/constants/fonts";
+import { parseCurrency } from "@/lib/split-bill/format";
+import { Expense, Participant } from "@/lib/split-bill/types";
+import { MaterialIcons } from "@expo/vector-icons";
 import React, { useEffect, useMemo, useState } from "react";
 import {
-  Platform,
+  Modal,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -9,11 +13,7 @@ import {
   View,
 } from "react-native";
 import Animated, { SlideInDown, SlideOutDown } from "react-native-reanimated";
-
-import { Poppins } from "@/constants/fonts";
-import { parseCurrency } from "@/lib/split-bill/format";
-import { Expense, Participant } from "@/lib/split-bill/types";
-import { BottomSheet } from "./ui/bottom-sheet"; // Import the generic BottomSheet
+import { useSafeAreaInsets } from "react-native-safe-area-context";
 
 type EditExpenseBottomSheetProps = {
   isVisible: boolean;
@@ -36,8 +36,6 @@ export const EditExpenseBottomSheet: React.FC<EditExpenseBottomSheetProps> = ({
   const [selectedParticipants, setSelectedParticipants] = useState<string[]>(
     []
   );
-  const [isDescriptionFocused, setDescriptionFocused] = useState(false);
-  const [isAmountFocused, setAmountFocused] = useState(false);
 
   useEffect(() => {
     if (expense) {
@@ -46,13 +44,14 @@ export const EditExpenseBottomSheet: React.FC<EditExpenseBottomSheetProps> = ({
       setPaidBy(expense.paidBy);
       setSelectedParticipants(expense.participants);
     } else {
-      // Reset form if no expense is being edited
       setDescription("");
       setAmountInput("");
       setPaidBy(null);
       setSelectedParticipants([]);
     }
-  }, [expense, isVisible]); // Reset when expense or visibility changes
+  }, [expense, isVisible]);
+
+  const insets = useSafeAreaInsets();
 
   const canSave = useMemo(() => {
     const amount = parseCurrency(amountInput);
@@ -81,7 +80,6 @@ export const EditExpenseBottomSheet: React.FC<EditExpenseBottomSheetProps> = ({
   const toggleSelectedParticipant = (id: string) => {
     setSelectedParticipants((current) => {
       if (current.includes(id)) {
-        // Ensure at least one participant is selected
         if (current.length === 1) return current;
         return current.filter((item) => item !== id);
       }
@@ -89,156 +87,175 @@ export const EditExpenseBottomSheet: React.FC<EditExpenseBottomSheetProps> = ({
     });
   };
 
-  if (!isVisible) return null;
-
   return (
-    <BottomSheet
-      isVisible={isVisible}
-      onClose={onClose}
-      title="Edit Pengeluaran" // Pass the title to the generic BottomSheet
+    <Modal
+      animationType="none"
+      transparent
+      visible={isVisible}
+      onRequestClose={onClose}
     >
-      <Animated.View
-        entering={SlideInDown.springify().duration(500)}
-        exiting={SlideOutDown.duration(300)}
-        style={styles.animatedContainer} // Apply container styles here
-      >
-        <ScrollView
-          style={{ backgroundColor: "#ffffff" }}
-          contentContainerStyle={[styles.content, { paddingBottom: 120 }]}
-          keyboardShouldPersistTaps="handled"
-          keyboardDismissMode={
-            Platform.OS === "ios" ? "interactive" : "on-drag"
-          }
+      <View style={styles.modalRoot}>
+        <Pressable style={styles.backdrop} onPress={onClose} />
+
+        <Animated.View
+          entering={SlideInDown.springify().duration(500)}
+          exiting={SlideOutDown.duration(300)}
+          style={[styles.sheet, { paddingBottom: insets.bottom || 16 }]}
         >
-          <View style={styles.field}>
-            <Text style={styles.label}>Deskripsi</Text>
-            <TextInput
-              value={description}
-              onChangeText={setDescription}
-              placeholder="Contoh: Makan malam di resto"
-              placeholderTextColor="#687076"
-              style={[
-                styles.input,
-                isDescriptionFocused && styles.inputFocused,
-              ]}
-              onFocus={() => setDescriptionFocused(true)}
-              onBlur={() => setDescriptionFocused(false)}
-            />
+          <View style={styles.header}>
+            <Text style={styles.title}>Edit Pengeluaran</Text>
+            <Pressable
+              onPress={onClose}
+              style={styles.closeButton}
+              hitSlop={{ top: 8, bottom: 8, left: 8, right: 8 }}
+              accessibilityRole="button"
+              accessibilityLabel="Tutup"
+            >
+              <MaterialIcons name="close" size={24} color="#687076" />
+            </Pressable>
           </View>
 
-          <View style={styles.field}>
-            <Text style={styles.label}>Jumlah (Rp)</Text>
-            <TextInput
-              value={amountInput}
-              onChangeText={(text) => {
-                const numericValue = text.replace(/[^0-9]/g, "");
-                setAmountInput(numericValue);
-              }}
-              placeholder="0"
-              placeholderTextColor="#687076"
-              keyboardType="numeric"
-              style={[styles.input, isAmountFocused && styles.inputFocused]}
-              onFocus={() => setAmountFocused(true)}
-              onBlur={() => setAmountFocused(false)}
-            />
-          </View>
-
-          <View style={styles.field}>
-            <Text style={styles.label}>Dibayar oleh</Text>
-            <View style={styles.choiceGroup}>
-              {participants.map((person) => {
-                const active = paidBy === person.id;
-                return (
-                  <Pressable
-                    key={person.id}
-                    style={[
-                      styles.choiceChip,
-                      active && styles.choiceChipActive,
-                    ]}
-                    onPress={() => setPaidBy(person.id)}
-                  >
-                    <Text
-                      style={[
-                        styles.choiceText,
-                        active && styles.choiceTextActive,
-                      ]}
-                    >
-                      {person.name}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-
-          <View style={styles.field}>
-            <Text style={styles.label}>Ditanggung oleh</Text>
-            <View style={styles.choiceGroup}>
-              {participants.map((person) => {
-                const active = selectedParticipants.includes(person.id);
-                return (
-                  <Pressable
-                    key={person.id}
-                    style={[
-                      styles.choiceChip,
-                      active && styles.choiceChipActive,
-                    ]}
-                    onPress={() => toggleSelectedParticipant(person.id)}
-                  >
-                    <Text
-                      style={[
-                        styles.choiceText,
-                        active && styles.choiceTextActive,
-                      ]}
-                    >
-                      {person.name}
-                    </Text>
-                  </Pressable>
-                );
-              })}
-            </View>
-          </View>
-        </ScrollView>
-        <View style={styles.stickyFooter}>
-          <Pressable
-            style={[styles.saveButton, !canSave && styles.disabledButton]}
-            disabled={!canSave}
-            onPress={handleSave}
+          <ScrollView
+            style={styles.body}
+            contentContainerStyle={styles.scrollContent}
+            keyboardShouldPersistTaps="handled"
           >
-            <Text style={styles.saveButtonText}>Update Expense</Text>
-          </Pressable>
-        </View>
-      </Animated.View>
-    </BottomSheet>
+            <View style={styles.field}>
+              <Text style={styles.label}>Deskripsi</Text>
+              <TextInput
+                value={description}
+                onChangeText={setDescription}
+                placeholder="Contoh: Makan malam di resto"
+                placeholderTextColor="#687076"
+                style={styles.input}
+              />
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.label}>Jumlah (Rp)</Text>
+              <TextInput
+                value={amountInput}
+                onChangeText={(text) => {
+                  const numericValue = text.replace(/[^0-9]/g, "");
+                  setAmountInput(numericValue);
+                }}
+                placeholder="0"
+                placeholderTextColor="#687076"
+                keyboardType="numeric"
+                style={styles.input}
+              />
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.label}>Dibayar oleh</Text>
+              <View style={styles.choiceGroup}>
+                {participants.map((person) => {
+                  const active = paidBy === person.id;
+                  return (
+                    <Pressable
+                      key={person.id}
+                      style={[
+                        styles.choiceChip,
+                        active && styles.choiceChipActive,
+                      ]}
+                      onPress={() => setPaidBy(person.id)}
+                    >
+                      <Text
+                        style={[
+                          styles.choiceText,
+                          active && styles.choiceTextActive,
+                        ]}
+                      >
+                        {person.name}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+
+            <View style={styles.field}>
+              <Text style={styles.label}>Ditanggung oleh</Text>
+              <View style={styles.choiceGroup}>
+                {participants.map((person) => {
+                  const active = selectedParticipants.includes(person.id);
+                  return (
+                    <Pressable
+                      key={person.id}
+                      style={[
+                        styles.choiceChip,
+                        active && styles.choiceChipActive,
+                      ]}
+                      onPress={() => toggleSelectedParticipant(person.id)}
+                    >
+                      <Text
+                        style={[
+                          styles.choiceText,
+                          active && styles.choiceTextActive,
+                        ]}
+                      >
+                        {person.name}
+                      </Text>
+                    </Pressable>
+                  );
+                })}
+              </View>
+            </View>
+          </ScrollView>
+
+          <View style={styles.footer}>
+            <Pressable
+              style={[styles.saveButton, !canSave && styles.disabledButton]}
+              disabled={!canSave}
+              onPress={handleSave}
+            >
+              <Text style={styles.saveButtonText}>Update Expense</Text>
+            </Pressable>
+          </View>
+        </Animated.View>
+      </View>
+    </Modal>
   );
 };
 
 const styles = StyleSheet.create({
-  animatedContainer: { // Renamed from 'container' to avoid conflict and emphasize it's for animation
-    paddingHorizontal: 20,
-    paddingVertical: 16,
-    maxHeight: "85%", // Adjust as needed
-    width: "100%", // Ensure container takes full width
-    overflow: "hidden",
-    elevation: 12,
-    shadowColor: "#000000",
-    shadowOpacity: 0.15,
-    shadowOffset: { width: 0, height: -2 },
-    shadowRadius: 8,
-    // The background color, border radius, etc. are now handled by the generic BottomSheet
+  modalRoot: {
+    flex: 1,
+    justifyContent: "flex-end",
+    alignItems: "stretch",
   },
-  content: {
+  backdrop: {
+    ...StyleSheet.absoluteFillObject,
+    backgroundColor: "rgba(0,0,0,0.5)",
+  },
+  sheet: {
+    backgroundColor: "#ffffff",
+    borderTopLeftRadius: 16,
+    borderTopRightRadius: 16,
+    paddingHorizontal: 16,
+    paddingTop: 16,
+    maxHeight: "85%", // Ensure sheet does not take full screen
+  },
+  header: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingBottom: 16,
+  },
+  title: {
+    fontSize: 18,
+    fontFamily: Poppins.semibold,
+    color: "#0f172a",
+  },
+  closeButton: {
+    padding: 4,
+  },
+  body: {
+    // This will now be the ScrollView
+  },
+  scrollContent: {
+    paddingBottom: 16, // Space for the content to not be blocked by footer
     gap: 16,
-    paddingBottom: 20, // Add padding for scrollable content
-    backgroundColor: "#ffffff",
-    flex: 1, // Ensure content takes up available space
-  },
-  stickyFooter: {
-    backgroundColor: "#ffffff",
-    borderTopWidth: 1,
-    borderTopColor: "#e2e8f0",
-    paddingHorizontal: 20,
-    paddingVertical: 12,
   },
   field: {
     gap: 8,
@@ -256,9 +273,6 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     fontSize: 16,
     fontFamily: Poppins.regular,
-  },
-  inputFocused: {
-    borderColor: "#2563eb",
   },
   choiceGroup: {
     flexDirection: "row",
@@ -285,12 +299,16 @@ const styles = StyleSheet.create({
     color: "#4c1d95",
     fontFamily: Poppins.medium,
   },
+  footer: {
+    paddingTop: 16,
+    paddingBottom: 16, // This padding will be inside the sheet
+    backgroundColor: "#ffffff",
+  },
   saveButton: {
     backgroundColor: "#2563eb",
     paddingVertical: 15,
     borderRadius: 12,
     alignItems: "center",
-    marginTop: 10,
   },
   saveButtonText: {
     color: "#ffffff",
