@@ -292,7 +292,13 @@ _Dibuat dengan Split Bill App_`;
       });
 
       const asset = await MediaLibrary.createAssetAsync(uri);
-      await MediaLibrary.createAlbumAsync("SplitBill", asset, false);
+      const albumName = "SplitBill";
+      const existing = await MediaLibrary.getAlbumAsync(albumName);
+      if (existing) {
+        await MediaLibrary.addAssetsToAlbumAsync([asset], existing, false);
+      } else {
+        await MediaLibrary.createAlbumAsync(albumName, asset, false);
+      }
       Alert.alert("Berhasil", "Gambar disimpan ke galeri (album SplitBill).");
     } catch (e) {
       Alert.alert(
@@ -370,7 +376,6 @@ _Dibuat dengan Split Bill App_`;
                 <View style={styles.card}>
                   <View style={styles.cardHeader}>
                     <Text style={styles.cardTitle}>Ringkasan per Orang</Text>
-
                     <View style={styles.participantCountBadge}>
                       <Text style={styles.participantCountBadgeText}>
                         {involvedParticipantsCount}
@@ -379,19 +384,15 @@ _Dibuat dengan Split Bill App_`;
                   </View>
 
                   {record.summary.perParticipant
-
                     .filter(
                       (item) =>
                         item.paid !== 0 ||
                         item.owed !== 0 ||
                         Math.abs(item.balance) > 0
                     )
-
                     .map((item) => {
                       const participantId = item.participantId;
-
                       const name = getName(participantId);
-
                       const status =
                         item.balance > 0
                           ? "Menagih"
@@ -403,7 +404,6 @@ _Dibuat dengan Split Bill App_`;
                         record.summary.settlements.filter(
                           (settlement) => settlement.from === participantId
                         );
-
                       const settlementsToReceive =
                         record.summary.settlements.filter(
                           (settlement) => settlement.to === participantId
@@ -411,20 +411,16 @@ _Dibuat dengan Split Bill App_`;
 
                       const transferMessages: {
                         key: string;
-
                         text: string;
-
                         variant: "pay" | "receive" | "neutral";
                       }[] = [];
 
                       settlementsToPay.forEach((settlement, index) => {
                         transferMessages.push({
                           key: `${participantId}-pay-${index}`,
-
                           text: `Bayar ${formatCurrency(
                             settlement.amount
                           )} ke ${getName(settlement.to)}`,
-
                           variant: "pay",
                         });
                       });
@@ -432,11 +428,9 @@ _Dibuat dengan Split Bill App_`;
                       settlementsToReceive.forEach((settlement, index) => {
                         transferMessages.push({
                           key: `${participantId}-receive-${index}`,
-
                           text: `Terima ${formatCurrency(
                             settlement.amount
                           )} dari ${getName(settlement.from)}`,
-
                           variant: "receive",
                         });
                       });
@@ -445,29 +439,23 @@ _Dibuat dengan Split Bill App_`;
                         if (item.balance > 0) {
                           transferMessages.push({
                             key: `${participantId}-balance-positive`,
-
                             text: `Kamu akan menerima ${formatCurrency(
                               item.balance
                             )}`,
-
                             variant: "receive",
                           });
                         } else if (item.balance < 0) {
                           transferMessages.push({
                             key: `${participantId}-balance-negative`,
-
                             text: `Kamu harus bayar ${formatCurrency(
                               Math.abs(item.balance)
                             )}`,
-
                             variant: "pay",
                           });
                         } else {
                           transferMessages.push({
                             key: `${participantId}-balance-neutral`,
-
                             text: "Saldo kamu sudah seimbang",
-
                             variant: "neutral",
                           });
                         }
@@ -480,7 +468,6 @@ _Dibuat dengan Split Bill App_`;
                               <View
                                 style={[
                                   styles.personAvatar,
-
                                   {
                                     backgroundColor:
                                       getAvatarColor(participantId),
@@ -491,10 +478,8 @@ _Dibuat dengan Split Bill App_`;
                                   {name.charAt(0).toUpperCase()}
                                 </Text>
                               </View>
-
                               <View style={styles.personInfo}>
                                 <Text style={styles.personName}>{name}</Text>
-
                                 <Text style={styles.personPaid}>
                                   Total Membayar:{" "}
                                   <Text style={styles.personPaidAmount}>
@@ -503,12 +488,10 @@ _Dibuat dengan Split Bill App_`;
                                 </Text>
                               </View>
                             </View>
-
                             <View style={styles.personExpense}>
                               <Text style={styles.personExpenseLabel}>
                                 Total Pengeluaran
                               </Text>
-
                               <Text style={styles.personExpenseValue}>
                                 {formatCurrency(item.owed)}
                               </Text>
@@ -519,7 +502,6 @@ _Dibuat dengan Split Bill App_`;
                             <Text style={styles.sectionLabel}>
                               Detail Pengeluaran
                             </Text>
-
                             {item.owedItems.length === 0 ? (
                               <Text style={styles.emptyBreakdownText}>
                                 Tidak ada pengeluaran langsung
@@ -528,7 +510,6 @@ _Dibuat dengan Split Bill App_`;
                               item.owedItems.map((owedItem) => {
                                 const isAdditional =
                                   owedItem.type === "additional";
-
                                 const amountDisplay =
                                   owedItem.amount < 0
                                     ? `- ${formatCurrency(
@@ -545,7 +526,6 @@ _Dibuat dengan Split Bill App_`;
                                       <Text style={styles.breakdownName}>
                                         {owedItem.description}
                                       </Text>
-
                                       {isAdditional ? (
                                         <View style={styles.breakdownBadge}>
                                           <Text
@@ -556,11 +536,9 @@ _Dibuat dengan Split Bill App_`;
                                         </View>
                                       ) : null}
                                     </View>
-
                                     <Text
                                       style={[
                                         styles.breakdownAmount,
-
                                         owedItem.amount < 0 &&
                                           styles.breakdownAmountNegative,
                                       ]}
@@ -578,11 +556,9 @@ _Dibuat dengan Split Bill App_`;
                               <Text style={styles.sectionLabel}>
                                 Status Pembayaran
                               </Text>
-
                               <View
                                 style={[
                                   styles.statusBadge,
-
                                   status === "Menagih"
                                     ? styles.statusBadgePositive
                                     : status === "Membayar"
@@ -593,7 +569,6 @@ _Dibuat dengan Split Bill App_`;
                                 <Text
                                   style={[
                                     styles.statusBadgeText,
-
                                     status === "Menagih"
                                       ? styles.statusTextPositive
                                       : status === "Membayar"
@@ -605,13 +580,11 @@ _Dibuat dengan Split Bill App_`;
                                 </Text>
                               </View>
                             </View>
-
                             {transferMessages.map((message) => (
                               <Text
                                 key={message.key}
                                 style={[
                                   styles.transferText,
-
                                   message.variant === "receive"
                                     ? styles.transferTextPositive
                                     : message.variant === "pay"
@@ -633,7 +606,6 @@ _Dibuat dengan Split Bill App_`;
                 <View style={styles.section}>
                   <View style={styles.sectionBody}>
                     <Text style={styles.sectionTitle}>Pelunasan</Text>
-
                     {record.summary.settlements.length === 0 ? (
                       <Text style={styles.emptyText}>
                         Semua saldo sudah seimbang 🎉
@@ -648,7 +620,6 @@ _Dibuat dengan Split Bill App_`;
                             {getName(settlement.from)} ➜{" "}
                             {getName(settlement.to)}
                           </Text>
-
                           <Text style={styles.settlementAmount}>
                             {formatCurrency(settlement.amount)}
                           </Text>
@@ -662,14 +633,12 @@ _Dibuat dengan Split Bill App_`;
                   <View style={styles.sectionBody}>
                     <View style={styles.sectionTitleContainer}>
                       <Text style={styles.sectionTitle}>Pengeluaran</Text>
-
                       <View style={styles.participantCountBadge}>
                         <Text style={styles.participantCountBadgeText}>
                           {expenseCount}
                         </Text>
                       </View>
                     </View>
-
                     {record.expenses.length === 0 ? (
                       <Text style={styles.emptyText}>
                         Tidak ada pengeluaran utama.
@@ -681,13 +650,11 @@ _Dibuat dengan Split Bill App_`;
                             <Text style={styles.expenseName}>
                               {expense.description}
                             </Text>
-
                             <Text style={styles.expenseMeta}>
                               Dibayar oleh {getName(expense.paidBy)} • Dibagi{" "}
                               {expense.participants.length} orang
                             </Text>
                           </View>
-
                           <Text style={styles.expenseAmount}>
                             {formatCurrency(expense.amount)}
                           </Text>
@@ -697,136 +664,122 @@ _Dibuat dengan Split Bill App_`;
                   </View>
                 </View>
 
-                <View style={styles.section}>
-                  <View style={styles.sectionBody}>
-                    <View style={styles.sectionTitleContainer}>
-                      <Text style={styles.sectionTitle}>
-                        Additional Expense
-                      </Text>
-
-                      <View style={styles.participantCountBadge}>
-                        <Text style={styles.participantCountBadgeText}>
-                          {additionalExpenseCount}
+                {record.additionalExpenses.length > 0 && (
+                  <View style={styles.section}>
+                    <View style={styles.sectionBody}>
+                      <View style={styles.sectionTitleContainer}>
+                        <Text style={styles.sectionTitle}>
+                          Additional Expense
                         </Text>
+                        <View style={styles.participantCountBadge}>
+                          <Text style={styles.participantCountBadgeText}>
+                            {additionalExpenseCount}
+                          </Text>
+                        </View>
                       </View>
-                    </View>
-
-                    {record.additionalExpenses.length === 0 ? (
-                      <Text style={styles.emptyText}>
-                        Tidak ada additional expense.
-                      </Text>
-                    ) : (
-                      record.additionalExpenses.map((expense) => (
+                      {record.additionalExpenses.map((expense) => (
                         <View key={expense.id} style={styles.expenseRow}>
                           <View style={styles.expenseInfo}>
                             <Text style={styles.expenseName}>
                               {expense.description}
                             </Text>
-
                             <Text style={styles.expenseMeta}>
                               Dibayar oleh {getName(expense.paidBy)} •
                               Proporsional ke {expense.participants.length}{" "}
                               orang
                             </Text>
                           </View>
-
                           <Text style={styles.expenseAmount}>
                             {formatCurrency(expense.amount)}
                           </Text>
                         </View>
-                      ))
-                    )}
+                      ))}
+                    </View>
                   </View>
-                </View>
+                )}
 
-                <View style={styles.section}>
-                  <View style={styles.sectionBody}>
-                    <Text style={styles.sectionTitle}>Metode Pembayaran</Text>
-
-                    {!hasAnySavedMethods ? (
-                      <Text style={styles.emptyText}>
-                        Tidak ada metode pembayaran yang tersimpan.
-                      </Text>
-                    ) : selectedPaymentMethods.length > 0 ? (
-                      <View style={styles.paymentList}>
-                        {selectedPaymentMethods.map((method) => (
-                          <View key={method.id} style={styles.paymentItem}>
-                            <View
-                              style={[
-                                styles.paymentIcon,
-
-                                method.category === "bank_transfer"
-                                  ? styles.paymentIconBank
-                                  : styles.paymentIconWallet,
-                              ]}
-                            >
-                              <MaterialCommunityIcons
-                                name={
+                {hasAnySavedMethods && (
+                  <View style={styles.section}>
+                    <View style={styles.sectionBody}>
+                      <Text style={styles.sectionTitle}>Metode Pembayaran</Text>
+                      {selectedPaymentMethods.length > 0 ? (
+                        <View style={styles.paymentList}>
+                          {selectedPaymentMethods.map((method) => (
+                            <View key={method.id} style={styles.paymentItem}>
+                              <View
+                                style={[
+                                  styles.paymentIcon,
                                   method.category === "bank_transfer"
-                                    ? "bank"
-                                    : "cellphone"
-                                }
-                                size={20}
-                                color={
-                                  method.category === "bank_transfer"
-                                    ? "#1d4ed8"
-                                    : "#7c3aed"
-                                }
-                              />
+                                    ? styles.paymentIconBank
+                                    : styles.paymentIconWallet,
+                                ]}
+                              >
+                                <MaterialCommunityIcons
+                                  name={
+                                    method.category === "bank_transfer"
+                                      ? "bank"
+                                      : "cellphone"
+                                  }
+                                  size={20}
+                                  color={
+                                    method.category === "bank_transfer"
+                                      ? "#1d4ed8"
+                                      : "#7c3aed"
+                                  }
+                                />
+                              </View>
+                              <View style={styles.paymentDetails}>
+                                <Text style={styles.paymentName}>
+                                  {method.provider}
+                                </Text>
+                                <Text style={styles.paymentOwner}>
+                                  {method.ownerName}
+                                </Text>
+                                <Text style={styles.paymentMeta}>
+                                  {method.category === "bank_transfer"
+                                    ? `Rek: ${method.accountNumber}`
+                                    : `No HP: ${method.phoneNumber}`}
+                                </Text>
+                              </View>
                             </View>
+                          ))}
 
-                            <View style={styles.paymentDetails}>
-                              <Text style={styles.paymentName}>
-                                {method.provider}
+                          {missingPaymentMethodIds.length > 0 ? (
+                            <View style={styles.paymentFallback}>
+                              <Text style={styles.paymentFallbackTitle}>
+                                Detail tambahan tidak ditemukan untuk ID
+                                berikut:
                               </Text>
-
-                              <Text style={styles.paymentOwner}>
-                                {method.ownerName}
-                              </Text>
-
-                              <Text style={styles.paymentMeta}>
-                                {method.category === "bank_transfer"
-                                  ? `Rek: ${method.accountNumber}`
-                                  : `No HP: ${method.phoneNumber}`}
-                              </Text>
+                              {missingPaymentMethodIds.map((id) => (
+                                <Text
+                                  key={id}
+                                  style={styles.paymentFallbackText}
+                                >
+                                  {id}
+                                </Text>
+                              ))}
                             </View>
-                          </View>
-                        ))}
-
-                        {missingPaymentMethodIds.length > 0 ? (
-                          <View style={styles.paymentFallback}>
-                            <Text style={styles.paymentFallbackTitle}>
-                              Detail tambahan tidak ditemukan untuk ID berikut:
-                            </Text>
-
-                            {missingPaymentMethodIds.map((id) => (
-                              <Text key={id} style={styles.paymentFallbackText}>
-                                {id}
-                              </Text>
-                            ))}
-                          </View>
-                        ) : null}
-                      </View>
-                    ) : (
-                      <View style={styles.paymentFallback}>
-                        <Text style={styles.paymentFallbackTitle}>
-                          Detail metode pembayaran tidak ditemukan.
-                        </Text>
-
-                        {record.paymentMethodIds.map((id) => (
-                          <Text key={id} style={styles.paymentFallbackText}>
-                            {id}
+                          ) : null}
+                        </View>
+                      ) : (
+                        <View style={styles.paymentFallback}>
+                          <Text style={styles.paymentFallbackTitle}>
+                            Detail metode pembayaran tidak ditemukan.
                           </Text>
-                        ))}
-
-                        <Text style={styles.paymentFallbackHint}>
-                          Coba cek kembali di halaman Metode Pembayaran untuk
-                          memperbarui data.
-                        </Text>
-                      </View>
-                    )}
+                          {record.paymentMethodIds.map((id) => (
+                            <Text key={id} style={styles.paymentFallbackText}>
+                              {id}
+                            </Text>
+                          ))}
+                          <Text style={styles.paymentFallbackHint}>
+                            Coba cek kembali di halaman Metode Pembayaran untuk
+                            memperbarui data.
+                          </Text>
+                        </View>
+                      )}
+                    </View>
                   </View>
-                </View>
+                )}
               </View>
             </View>
           </>
@@ -841,7 +794,6 @@ _Dibuat dengan Split Bill App_`;
             disabled={isSaving}
           >
             <MaterialIcons name="file-download" size={18} color="#ffffff" />
-
             <Text style={styles.downloadButtonText}>
               {isSaving ? "Memproses..." : "Download Split Bill"}
             </Text>
@@ -857,7 +809,6 @@ const styles = StyleSheet.create({
     flex: 1,
     backgroundColor: "#f6fafb",
   },
-
   container: {
     padding: 8,
     paddingVertical: 12,
@@ -865,7 +816,6 @@ const styles = StyleSheet.create({
     paddingTop: 100,
     backgroundColor: "#f6fafb",
   },
-
   loadingBox: {
     backgroundColor: "transparent",
     borderRadius: 16,
@@ -873,36 +823,30 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 12,
   },
-
   loadingText: {
     color: "#475569",
   },
-
   errorBox: {
     backgroundColor: "#fee2e2",
     borderRadius: 16,
     padding: 24,
     gap: 8,
   },
-
   errorTitle: {
     fontSize: 18,
     fontWeight: "700",
     color: "#b91c1c",
   },
-
   errorText: {
     color: "#b91c1c",
     fontSize: 14,
   },
-
   card: {
     backgroundColor: "#ffffff",
     borderRadius: 12,
     padding: 16,
     gap: 14,
   },
-
   shareCardClickable: {
     backgroundColor: "#ffffff",
     borderRadius: 12,
@@ -910,20 +854,17 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-
       height: 1,
     },
     shadowOpacity: 0.05,
     shadowRadius: 1.41,
     elevation: 2,
   },
-
   shareRow: {
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
   },
-
   shareIcon: {
     width: 40,
     height: 40,
@@ -932,46 +873,38 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     backgroundColor: "rgba(34,197,94,0.12)",
   },
-
   shareIconWhatsApp: {
     backgroundColor: "rgba(34,197,94,0.12)",
   },
-
   shareTextBlock: {
     flex: 1,
     gap: 4,
   },
-
   shareTitle: {
     fontSize: 16,
     fontWeight: "700",
     color: "#0f172a",
   },
-
   shareSubtitle: {
     fontSize: 12,
     color: "#475569",
   },
-
   cardHeader: {
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
   },
-
   cardTitle: {
     fontSize: 18,
     fontWeight: "700",
     color: "#0f172a",
   },
-
   hero: {
     backgroundColor: "#1E4ED8",
     padding: 20,
     flexDirection: "row",
     alignItems: "flex-start",
     gap: 14,
-
     position: "absolute",
     top: 0,
     left: 0,
@@ -982,7 +915,6 @@ const styles = StyleSheet.create({
     borderBottomRightRadius: 12,
     overflow: "hidden",
   },
-
   heroIcon: {
     width: 52,
     height: 52,
@@ -991,37 +923,30 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-
   heroIconText: {
     fontSize: 24,
   },
-
   heroText: {
     flex: 1,
     gap: 6,
   },
-
   heroTitle: {
     fontSize: 18,
     fontWeight: "700",
     color: "#ffffff",
   },
-
   heroSubtitle: {
     color: "#bfdbfe",
     fontSize: 14,
   },
-
   section: {
     gap: 12,
   },
-
   sectionTitle: {
     fontSize: 16,
     fontWeight: "700",
     color: "#0f172a",
   },
-
   sectionBody: {
     backgroundColor: "#ffffff",
     borderRadius: 16,
@@ -1033,7 +958,6 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 10,
   },
-
   personCard: {
     borderRadius: 16,
     borderWidth: 1,
@@ -1042,474 +966,304 @@ const styles = StyleSheet.create({
     padding: 16,
     gap: 16,
   },
-
   personHeader: {
     flexDirection: "row",
-
     justifyContent: "space-between",
-
     alignItems: "center",
-
     gap: 16,
   },
-
   personHeaderLeft: {
     flexDirection: "row",
-
     alignItems: "flex-start",
-
     gap: 12,
-
     flex: 1,
   },
-
   personAvatar: {
     width: 36,
-
     height: 36,
-
     borderRadius: 999,
-
     backgroundColor: "#1d4ed8",
-
     alignItems: "center",
-
     justifyContent: "center",
   },
-
   personAvatarText: {
     color: "#ffffff",
-
     fontWeight: "700",
-
     fontSize: 14,
   },
-
   personInfo: {
     flex: 1,
-
     gap: 6,
   },
-
   personName: {
     fontSize: 16,
-
     fontWeight: "700",
-
     color: "#0f172a",
   },
-
   statusBadge: {
     alignSelf: "flex-start",
-
     borderRadius: 999,
-
     paddingHorizontal: 10,
-
     paddingVertical: 4,
   },
-
   statusBadgeText: {
     fontSize: 12,
-
     fontWeight: "600",
   },
-
   statusBadgePositive: {
     backgroundColor: "rgba(34,197,94,0.12)",
   },
-
   statusBadgeNegative: {
     backgroundColor: "rgba(239,68,68,0.12)",
   },
-
   statusBadgeNeutral: {
     backgroundColor: "rgba(148,163,184,0.12)",
   },
-
   statusTextPositive: {
     color: "#15803d",
   },
-
   statusTextNegative: {
     color: "#b91c1c",
   },
-
   statusTextNeutral: {
     color: "#475569",
   },
-
   personPaid: {
     color: "#64748b",
-
     fontSize: 12,
   },
-
   personPaidAmount: {
     color: "#2563eb",
-
     fontWeight: "700",
   },
-
   personExpense: {
     alignItems: "flex-end",
-
     gap: 4,
   },
-
   personExpenseLabel: {
     fontSize: 12,
-
     color: "#64748b",
   },
-
   personExpenseValue: {
     color: "#0f172a",
-
     fontSize: 18,
-
     fontWeight: "700",
   },
-
   breakdownSection: {
     gap: 4,
   },
-
   sectionLabel: {
     fontSize: 13,
-
     fontWeight: "700",
-
     color: "#0f172a",
   },
-
   emptyBreakdownText: {
     color: "#94a3b8",
-
     fontSize: 12,
   },
-
   breakdownRow: {
     flexDirection: "row",
-
     alignItems: "center",
-
     justifyContent: "space-between",
-
     paddingVertical: 6,
-
     gap: 12,
   },
-
   breakdownInfo: {
     flex: 1,
-
     gap: 4,
-
     flexDirection: "row",
   },
-
   breakdownName: {
     color: "#1f2937",
-
     fontSize: 13,
   },
-
   breakdownBadge: {
     alignSelf: "flex-start",
-
     borderRadius: 999,
-
     backgroundColor: "rgba(124,58,237,0.12)",
-
     paddingHorizontal: 8,
-
     paddingVertical: 2,
   },
-
   breakdownBadgeText: {
     fontSize: 10,
-
     fontWeight: "600",
-
     color: "#7c3aed",
   },
-
   breakdownAmount: {
     fontWeight: "700",
-
     color: "#0f172a",
   },
-
   breakdownAmountNegative: {
     color: "#ef4444",
   },
-
   transferSection: {
     borderTopWidth: 1,
-
     borderTopColor: "#e2e8f0",
-
     paddingTop: 12,
-
     gap: 6,
   },
-
   transferHeader: {
     flexDirection: "row",
-
     alignItems: "center",
-
     justifyContent: "space-between",
   },
-
   transferText: {
     fontSize: 12,
-
     color: "#475569",
   },
-
   transferTextPositive: {
     color: "#16a34a",
   },
-
   transferTextNegative: {
     color: "#ef4444",
   },
-
   transferTextNeutral: {
     color: "#475569",
   },
-
   settlementRow: {
     flexDirection: "row",
-
     justifyContent: "space-between",
-
     alignItems: "center",
-
     borderRadius: 12,
-
     padding: 12,
-
     backgroundColor: "#f1f5f9",
   },
-
   settlementNames: {
     color: "#0f172a",
-
     fontWeight: "600",
   },
-
   settlementAmount: {
     color: "#2563eb",
-
     fontWeight: "700",
   },
-
   expenseRow: {
     flexDirection: "row",
-
     justifyContent: "space-between",
-
     alignItems: "center",
-
     gap: 16,
   },
-
   expenseInfo: {
     flex: 1,
-
     gap: 4,
   },
-
   expenseName: {
     color: "#0f172a",
-
     fontWeight: "600",
   },
-
   expenseMeta: {
     color: "#64748b",
-
     fontSize: 12,
   },
-
   expenseAmount: {
     color: "#0f172a",
-
     fontWeight: "700",
   },
-
   paymentList: {
     gap: 12,
   },
-
   paymentItem: {
     flexDirection: "row",
-
     alignItems: "center",
-
     gap: 12,
-
     backgroundColor: "#f8fafc",
-
     borderRadius: 12,
-
     padding: 14,
   },
-
   paymentIcon: {
     width: 44,
-
     height: 44,
-
     borderRadius: 12,
-
     alignItems: "center",
-
     justifyContent: "center",
-
     backgroundColor: "#e2e8f0",
   },
-
   paymentIconBank: {
     backgroundColor: "#dbeafe",
   },
-
   paymentIconWallet: {
     backgroundColor: "#ede9fe",
   },
-
   paymentDetails: {
     flex: 1,
-
     gap: 2,
   },
-
   paymentName: {
     fontSize: 14,
-
     fontWeight: "700",
-
     color: "#0f172a",
   },
-
   paymentOwner: {
     fontSize: 13,
-
     color: "#475569",
   },
-
   paymentMeta: {
     fontSize: 12,
-
     color: "#64748b",
   },
-
   paymentFallback: {
     gap: 6,
-
     padding: 12,
-
     borderRadius: 10,
-
     backgroundColor: "#f1f5f9",
   },
-
   paymentFallbackTitle: {
     color: "#0f172a",
-
     fontWeight: "600",
-
     fontSize: 13,
   },
-
   paymentFallbackText: {
     color: "#475569",
-
     fontSize: 12,
   },
-
   paymentFallbackHint: {
     color: "#64748b",
-
     fontSize: 11,
   },
-
   emptyText: {
     color: "#64748b",
-
     fontSize: 13,
   },
-
   positive: {
     color: "#15803d",
   },
-
   negative: {
     color: "#b91c1c",
   },
-
   neutral: {
-    color: "#64748b",
+    color: "#475569",
   },
-
   participantCountBadge: {
     backgroundColor: "#e0f2fe",
-
     borderRadius: 999,
-
     paddingHorizontal: 8,
-
     paddingVertical: 4,
   },
-
   participantCountBadgeText: {
     fontSize: 12,
-
     fontWeight: "700",
-
     color: "#2563eb",
   },
-
   footer: {
     flexDirection: "row",
-
     gap: 12,
-
     padding: 16,
-
     backgroundColor: "#f6fafb",
-
     borderTopWidth: 1,
-
     borderTopColor: "#e2e8f0",
   },
-
   downloadButton: {
     flex: 1,
-
     backgroundColor: "#2563eb",
-
     borderRadius: 12,
-
     paddingVertical: 14,
-
     alignItems: "center",
-
     justifyContent: "center",
-
     flexDirection: "row",
-
     gap: 8,
   },
-
   downloadButtonText: {
     color: "#ffffff",
-
     fontWeight: "700",
-
     fontSize: 16,
   },
 });
