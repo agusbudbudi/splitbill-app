@@ -18,10 +18,7 @@ import "react-native-reanimated";
 import { Snackbar as NativeSnackbar } from "@/components/ui/snackbar"; // Renamed for clarity
 import { Snackbar as WebSnackbar } from "@/components/ui/snackbar.web"; // Import web-specific Snackbar
 import { AuthProvider } from "@/context/auth-context";
-import {
-  SnackbarProvider,
-  useSnackbar,
-} from "@/context/snackbar-context";
+import { SnackbarProvider, useSnackbar } from "@/context/snackbar-context";
 import { SplitBillProvider } from "@/context/split-bill-context";
 
 SplashScreen.preventAutoHideAsync().catch(() => {
@@ -30,8 +27,8 @@ SplashScreen.preventAutoHideAsync().catch(() => {
 
 function SnackbarRenderer() {
   const { snackbar, hideSnackbar } = useSnackbar();
-  console.log('SnackbarRenderer snackbar state:', snackbar);
-  
+  console.log("SnackbarRenderer snackbar state:", snackbar);
+
   // Conditionally select the Snackbar component based on platform
   const PlatformSpecificSnackbar = Platform.select({
     ios: NativeSnackbar,
@@ -41,7 +38,9 @@ function SnackbarRenderer() {
   });
 
   // Render the selected Snackbar component
-  return <PlatformSpecificSnackbar snackbar={snackbar} onClose={hideSnackbar} />;
+  return (
+    <PlatformSpecificSnackbar snackbar={snackbar} onClose={hideSnackbar} />
+  );
 }
 
 export default function RootLayout() {
@@ -131,7 +130,7 @@ export default function RootLayout() {
               />
               <Stack.Screen
                 name="transactions"
-                options={{ title: "Transactions" }}
+                options={{ headerShown: false }}
               />
               <Stack.Screen
                 name="summary"

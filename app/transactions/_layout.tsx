@@ -4,7 +4,14 @@ export default function TransactionsLayout() {
   return (
     <Stack
       screenOptions={{
-        headerShown: false,
+        headerShown: true,
+        headerBackTitle: "Back",
+        headerShadowVisible: false,
+        headerTitleStyle: {
+          fontSize: 18,
+          fontWeight: "700",
+          color: "#0f172a",
+        },
         contentStyle: {
           backgroundColor: "#f6fafb",
         },
