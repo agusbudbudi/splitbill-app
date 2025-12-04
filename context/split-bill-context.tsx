@@ -7,6 +7,8 @@ import {
   useMemo,
   useState,
 } from "react";
+import { Platform } from "react-native";
+import * as SecureStore from "expo-secure-store";
 
 import { useAuth } from "@/context/auth-context";
 import {
@@ -24,6 +26,10 @@ import {
   PaymentMethod,
   SplitBillSummary,
 } from "@/lib/split-bill/types";
+import {
+  savePaymentMethods,
+  loadPaymentMethods,
+} from "@/lib/split-bill/payment-method-storage";
 
 type SplitBillState = {
   activityName: string;
@@ -91,6 +97,7 @@ export function SplitBillProvider({ children }: { children: ReactNode }) {
   const [state, setState] = useState<SplitBillState>(initialState);
   const { isAuthenticated, isInitializing } = useAuth();
 
+  // Load participants and payment methods on initialization
   useEffect(() => {
     if (isInitializing) {
       return;
@@ -115,12 +122,34 @@ export function SplitBillProvider({ children }: { children: ReactNode }) {
       } catch (error) {
         console.error("Failed to load participants", error);
       }
+
+      try {
+        const { paymentMethods, selectedPaymentMethodIds } =
+          await loadPaymentMethods();
+        if (cancelled) return;
+
+        setState((current) => ({
+          ...current,
+          paymentMethods,
+          selectedPaymentMethodIds,
+        }));
+      } catch (error) {
+        console.error("Failed to load payment methods", error);
+      }
     })();
 
     return () => {
       cancelled = true;
     };
   }, [isAuthenticated, isInitializing]);
+
+  // Save payment methods when they change
+  useEffect(() => {
+    // Only save if not initializing and authenticated
+    if (!isInitializing && isAuthenticated) {
+      savePaymentMethods(state.paymentMethods, state.selectedPaymentMethodIds);
+    }
+  }, [state.paymentMethods, state.selectedPaymentMethodIds, isInitializing, isAuthenticated]);
 
   const addParticipant = useCallback(
     async (name: string) => {
@@ -215,7 +244,6 @@ export function SplitBillProvider({ children }: { children: ReactNode }) {
     (payload: Omit<Expense, "id" | "createdAt">) => {
       if (
         !payload.description.trim() ||
-        payload.amount <= 0 ||
         payload.participants.length === 0
       ) {
         return;
@@ -241,7 +269,6 @@ export function SplitBillProvider({ children }: { children: ReactNode }) {
     (expenseId: string, payload: Omit<Expense, "id" | "createdAt">) => {
       if (
         !payload.description.trim() ||
-        payload.amount <= 0 ||
         payload.participants.length === 0 ||
         !payload.paidBy
       ) {
@@ -294,7 +321,6 @@ export function SplitBillProvider({ children }: { children: ReactNode }) {
     (payload: Omit<AdditionalExpense, "id" | "createdAt">) => {
       if (
         !payload.description.trim() ||
-        payload.amount <= 0 ||
         payload.participants.length === 0 ||
         !payload.paidBy
       ) {
@@ -338,7 +364,6 @@ export function SplitBillProvider({ children }: { children: ReactNode }) {
     ) => {
       if (
         !payload.description.trim() ||
-        payload.amount <= 0 ||
         payload.participants.length === 0 ||
         !payload.paidBy
       ) {

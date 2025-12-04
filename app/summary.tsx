@@ -14,6 +14,7 @@ import {
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
+import { Poppins } from "@/constants/fonts";
 import { useAuth } from "@/context/auth-context";
 import { useSnackbar } from "@/context/snackbar-context";
 import { useSplitBill } from "@/context/split-bill-context";
@@ -32,9 +33,9 @@ export default function SummaryScreen() {
   useLayoutEffect(() => {
     navigation.setOptions({
       title: "Ringkasan",
-      headerStyle: { backgroundColor: "#1E4ED8", borderBottomWidth: 0 },
+      headerStyle: { backgroundColor: "#3462F2", borderBottomWidth: 0 },
       headerTintColor: "#ffffff",
-      headerTitleStyle: { color: "#ffffff" },
+      headerTitleStyle: { color: "#ffffff", fontFamily: Poppins.bold },
       headerBackTitleStyle: { color: "#ffffff" },
     });
   }, [navigation]);
@@ -439,6 +440,23 @@ _Dibuat dengan Split Bill App_`;
                                 <Text style={styles.breakdownName}>
                                   {owedItem.description}
                                 </Text>
+                                {owedItem.amount < 0 ? (
+                                  <View
+                                    style={[
+                                      styles.breakdownBadge,
+                                      { backgroundColor: "#dcfce7" },
+                                    ]}
+                                  >
+                                    <Text
+                                      style={[
+                                        styles.breakdownBadgeText,
+                                        { color: "#166534" },
+                                      ]}
+                                    >
+                                      Discount
+                                    </Text>
+                                  </View>
+                                ) : null}
                                 {isAdditional ? (
                                   <View style={styles.breakdownBadge}>
                                     <Text style={styles.breakdownBadgeText}>
@@ -586,7 +604,7 @@ _Dibuat dengan Split Bill App_`;
                           color={
                             method.category === "bank_transfer"
                               ? "#1d4ed8"
-                              : "#7c3aed"
+                              : "#3462F2"
                           }
                         />
                       </View>
@@ -729,7 +747,7 @@ _Dibuat dengan Split Bill App_`;
               <MaterialCommunityIcons
                 name="history"
                 size={18}
-                color="#7c3aed"
+                color="#3462F2"
               />
               <Text style={styles.viewHistoryButtonText}>Lihat Riwayat</Text>
             </Pressable>
@@ -754,7 +772,7 @@ const styles = StyleSheet.create({
   },
 
   hero: {
-    backgroundColor: "#1E4ED8",
+    backgroundColor: "#3462F2",
     padding: 20,
     flexDirection: "row",
     alignItems: "flex-start",
@@ -780,11 +798,12 @@ const styles = StyleSheet.create({
   heroTitle: {
     color: "#ffffff",
     fontSize: 16,
-    fontWeight: "800",
+    fontFamily: Poppins.bold,
   },
   heroSubtitle: {
     color: "#bfdbfe",
     fontSize: 14,
+    fontFamily: Poppins.regular,
   },
   card: {
     backgroundColor: "#ffffff",
@@ -832,12 +851,13 @@ const styles = StyleSheet.create({
   },
   shareTitle: {
     fontSize: 16,
-    fontWeight: "700",
+    fontFamily: Poppins.semibold,
     color: "#0f172a",
   },
   shareSubtitle: {
     fontSize: 12,
     color: "#475569",
+    fontFamily: Poppins.regular,
   },
   deleteCardClickable: {
     backgroundColor: "#ffffff",
@@ -866,12 +886,13 @@ const styles = StyleSheet.create({
   },
   deleteTitle: {
     fontSize: 16,
-    fontWeight: "700",
+    fontFamily: Poppins.semibold,
     color: "#0f172a",
   },
   deleteSubtitle: {
     fontSize: 12,
     color: "#475569",
+    fontFamily: Poppins.regular,
   },
   cardHeader: {
     flexDirection: "row",
@@ -881,7 +902,7 @@ const styles = StyleSheet.create({
   },
   cardTitle: {
     fontSize: 18,
-    fontWeight: "700",
+    fontFamily: Poppins.bold,
     color: "#0f172a",
   },
 
@@ -893,9 +914,9 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   paymentCountText: {
-    color: "#7c3aed",
-    fontWeight: "600",
+    color: "#3462F2",
     fontSize: 12,
+    fontFamily: Poppins.semibold,
   },
   shareInfoContent: {
     flexDirection: "column",
@@ -913,7 +934,7 @@ const styles = StyleSheet.create({
   },
   shareInfoTitle: {
     fontSize: 16,
-    fontWeight: "700",
+    fontFamily: Poppins.bold,
     color: "#0f172a",
   },
   shareInfoText: {
@@ -921,6 +942,7 @@ const styles = StyleSheet.create({
     color: "#475569",
     lineHeight: 18,
     textAlign: "center",
+    fontFamily: Poppins.regular,
   },
   shareActionRow: {
     flexDirection: "column",
@@ -956,8 +978,8 @@ const styles = StyleSheet.create({
   },
   personAvatarText: {
     color: "#ffffff",
-    fontWeight: "700",
     fontSize: 14,
+    fontFamily: Poppins.semibold,
   },
   personInfo: {
     flex: 1,
@@ -965,8 +987,8 @@ const styles = StyleSheet.create({
   },
   personName: {
     fontSize: 16,
-    fontWeight: "700",
     color: "#0f172a",
+    fontFamily: Poppins.bold,
   },
   statusBadge: {
     alignSelf: "flex-start",
@@ -976,7 +998,7 @@ const styles = StyleSheet.create({
   },
   statusBadgeText: {
     fontSize: 12,
-    fontWeight: "600",
+    fontFamily: Poppins.regular,
   },
   statusBadgePositive: {
     backgroundColor: "rgba(34,197,94,0.12)",
@@ -999,10 +1021,11 @@ const styles = StyleSheet.create({
   personPaid: {
     color: "#64748b",
     fontSize: 12,
+    fontFamily: Poppins.regular,
   },
   personPaidAmount: {
     color: "#2563eb",
-    fontWeight: "700",
+    fontFamily: Poppins.bold,
   },
   personExpense: {
     alignItems: "flex-end",
@@ -1011,23 +1034,25 @@ const styles = StyleSheet.create({
   personExpenseLabel: {
     fontSize: 12,
     color: "#64748b",
+    fontFamily: Poppins.regular,
   },
   personExpenseValue: {
     color: "#0f172a",
     fontSize: 18,
-    fontWeight: "700",
+    fontFamily: Poppins.bold,
   },
   breakdownSection: {
     gap: 4,
   },
   sectionLabel: {
     fontSize: 13,
-    fontWeight: "700",
     color: "#0f172a",
+    fontFamily: Poppins.bold,
   },
   emptyBreakdownText: {
     color: "#94a3b8",
     fontSize: 12,
+    fontFamily: Poppins.regular,
   },
   breakdownRow: {
     flexDirection: "row",
@@ -1044,6 +1069,7 @@ const styles = StyleSheet.create({
   breakdownName: {
     color: "#1f2937",
     fontSize: 13,
+    fontFamily: Poppins.regular,
   },
   breakdownBadge: {
     alignSelf: "flex-start",
@@ -1054,11 +1080,11 @@ const styles = StyleSheet.create({
   },
   breakdownBadgeText: {
     fontSize: 10,
-    fontWeight: "600",
-    color: "#7c3aed",
+    color: "#3462F2",
+    fontFamily: Poppins.regular,
   },
   breakdownAmount: {
-    fontWeight: "700",
+    fontFamily: Poppins.semibold,
     color: "#0f172a",
   },
   breakdownAmountNegative: {
@@ -1082,15 +1108,19 @@ const styles = StyleSheet.create({
   transferText: {
     fontSize: 12,
     color: "#475569",
+    fontFamily: Poppins.regular,
   },
   transferTextPositive: {
     color: "#16a34a",
+    fontFamily: Poppins.regular,
   },
   transferTextNegative: {
     color: "#ef4444",
+    fontFamily: Poppins.regular,
   },
   transferTextNeutral: {
     color: "#475569",
+    fontFamily: Poppins.regular,
   },
   paymentList: {
     gap: 12,
@@ -1099,7 +1129,7 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 12,
-    borderRadius: 12,
+    borderRadius: 16,
     borderWidth: 1,
     borderColor: "#e2e8f0",
     padding: 14,
@@ -1124,27 +1154,33 @@ const styles = StyleSheet.create({
   },
   paymentName: {
     fontSize: 14,
-    fontWeight: "700",
     color: "#0f172a",
+    fontFamily: Poppins.bold,
   },
   paymentOwner: {
     fontSize: 13,
     color: "#475569",
-    fontWeight: "600",
+    fontFamily: Poppins.semibold,
   },
   paymentMeta: {
     fontSize: 12,
     color: "#64748b",
+    fontFamily: Poppins.regular,
   },
   managePaymentButton: {
-    backgroundColor: "#7056ec",
-    borderRadius: 12,
-    paddingVertical: 14,
+    borderWidth: 1,
+    borderColor: "#ede9fe",
     alignItems: "center",
+    borderRadius: 12,
+    paddingHorizontal: 16,
+    paddingVertical: 14,
+    justifyContent: "center",
+    backgroundColor: "#f5f3ff",
   },
   managePaymentButtonText: {
-    color: "#ffffff",
-    fontWeight: "700",
+    color: "#2563eb",
+    fontSize: 16,
+    fontFamily: Poppins.semibold,
   },
   settlementRow: {
     padding: 14,
@@ -1161,15 +1197,15 @@ const styles = StyleSheet.create({
   },
   settlementFrom: {
     color: "#ef4444",
-    fontWeight: "700",
+    fontFamily: Poppins.semibold,
   },
   settlementTo: {
     color: "#22c55e",
-    fontWeight: "700",
+    fontFamily: Poppins.semibold,
   },
   settlementAmount: {
     color: "#0f172a",
-    fontWeight: "700",
+    fontFamily: Poppins.bold,
   },
   emptyState: {
     backgroundColor: "#ffffff",
@@ -1185,12 +1221,13 @@ const styles = StyleSheet.create({
   emptyTitle: {
     color: "#0f172a",
     fontSize: 16,
-    fontWeight: "700",
+    fontFamily: Poppins.semibold,
   },
   emptyText: {
     color: "#64748b",
     fontSize: 12,
     textAlign: "center",
+    fontFamily: Poppins.regular,
   },
   emptyButton: {
     borderRadius: 12,
@@ -1201,7 +1238,7 @@ const styles = StyleSheet.create({
   },
   emptyButtonText: {
     color: "#2563eb",
-    fontWeight: "600",
+    fontFamily: Poppins.medium,
   },
   emptyMini: {
     borderRadius: 12,
@@ -1217,7 +1254,7 @@ const styles = StyleSheet.create({
     zIndex: 200,
   },
   feedbackCard: {
-    backgroundColor: "#7c3aed",
+    backgroundColor: "#3462F2",
     borderRadius: 12,
     padding: 16,
     flexDirection: "row",
@@ -1247,11 +1284,12 @@ const styles = StyleSheet.create({
   feedbackTitle: {
     color: "#ffffff",
     fontSize: 16,
-    fontWeight: "700",
+    fontFamily: Poppins.semibold,
   },
   feedbackSubtitle: {
     color: "#ede9fe",
     fontSize: 12,
+    fontFamily: Poppins.regular,
   },
   feedbackCloseButton: {
     padding: 4,
@@ -1280,7 +1318,7 @@ const styles = StyleSheet.create({
   homeButtonText: {
     color: "#2563eb",
     fontSize: 16,
-    fontWeight: "700",
+    fontFamily: Poppins.semibold,
   },
   viewHistoryButton: {
     borderWidth: 1,
@@ -1296,9 +1334,9 @@ const styles = StyleSheet.create({
     backgroundColor: "#f5f3ff",
   },
   viewHistoryButtonText: {
-    color: "#7c3aed",
+    color: "#3462F2",
     fontSize: 16,
-    fontWeight: "700",
+    fontFamily: Poppins.semibold,
   },
   shareButton: {
     width: "100%",
@@ -1324,7 +1362,7 @@ const styles = StyleSheet.create({
     alignItems: "center",
     gap: 8,
     borderRadius: 12,
-    backgroundColor: "#7c3aed",
+    backgroundColor: "#3462F2",
     paddingHorizontal: 16,
     paddingVertical: 14,
     flex: 1,
@@ -1335,15 +1373,18 @@ const styles = StyleSheet.create({
   },
   saveButtonText: {
     color: "#ffffff",
-    fontWeight: "700",
+    fontFamily: Poppins.semibold,
   },
   positive: {
     color: "#22c55e",
+    fontFamily: Poppins.semibold,
   },
   negative: {
     color: "#ef4444",
+    fontFamily: Poppins.semibold,
   },
   neutral: {
     color: "#64748b",
+    fontFamily: Poppins.semibold,
   },
 });

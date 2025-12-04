@@ -1,7 +1,7 @@
 import { ActivityInputBottomSheet } from "@/components/ui/activity-input-bottom-sheet";
 import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useEffect, useMemo, useState } from "react";
+import { useNavigation, useRouter } from "expo-router";
+import { useEffect, useLayoutEffect, useMemo, useState } from "react";
 import {
   FlatList,
   Image,
@@ -20,11 +20,14 @@ import { EditExpenseBottomSheet } from "@/components/edit-expense-bottom-sheet";
 import { Poppins } from "@/constants/fonts";
 import { useAuth } from "@/context/auth-context";
 import { useSplitBill } from "@/context/split-bill-context";
+import { useThemeColor } from "@/hooks/use-theme-color";
 import { formatCurrency } from "@/lib/split-bill/format";
 import { Expense } from "@/lib/split-bill/types";
+import { hexToRgba } from "@/lib/utils/colors";
 
 export default function ExpensesScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const { isAuthenticated } = useAuth();
   const {
     participants,
@@ -36,6 +39,27 @@ export default function ExpensesScreen() {
     updateActivityName,
     updateExpense, // Add updateExpense here
   } = useSplitBill();
+
+  const background = useThemeColor({}, "background");
+  const card = useThemeColor({}, "card");
+  const text = useThemeColor({}, "text");
+  const textSecondary = useThemeColor({}, "textSecondary");
+  const tint = useThemeColor({}, "tint");
+  const error = useThemeColor({}, "error");
+  const warning = useThemeColor({}, "warning");
+  const icon = useThemeColor({}, "icon");
+  const primary = useThemeColor({}, "primary");
+  const primaryDark = useThemeColor({}, "primaryDark");
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: "Catat Pengeluaran",
+      headerStyle: { backgroundColor: primary, borderBottomWidth: 0 },
+      headerTintColor: card,
+      headerTitleStyle: { color: card },
+      headerBackTitleStyle: { color: card },
+    });
+  }, [navigation, primary, card]);
 
   const [description, setDescription] = useState("");
   const [amountInput, setAmountInput] = useState("");
@@ -69,11 +93,17 @@ export default function ExpensesScreen() {
     const amount = Number(amountInput);
     return (
       description.trim().length > 0 &&
-      amount > 0 &&
       !!paidBy &&
-      selectedParticipants.length > 0
+      selectedParticipants.length > 0 &&
+      !Number.isNaN(amount) &&
+      amount !== 0
     );
-  }, [description, amountInput, paidBy, selectedParticipants.length]);
+  }, [description, paidBy, selectedParticipants.length, amountInput]);
+
+  const handleAmountChange = (value: string) => {
+    const sanitized = value.replace(/[^0-9-]/g, "");
+    setAmountInput(sanitized);
+  };
 
   const resetForm = () => {
     setDescription("");
@@ -116,52 +146,74 @@ export default function ExpensesScreen() {
   };
 
   return (
-    <SafeAreaView edges={["left", "right", "bottom"]} style={styles.safeArea}>
+    <SafeAreaView
+      edges={["left", "right", "bottom"]}
+      style={[styles.safeArea, { backgroundColor: background }]}
+    >
       <KeyboardAvoidingView
         behavior={Platform.OS === "ios" ? "padding" : undefined}
         style={styles.wrapper}
       >
         <ScrollView contentContainerStyle={styles.container}>
-          <View style={styles.hero}>
-            {/* <View style={styles.heroIcon}>
-              <FontAwesome5 name="receipt" size={22} color="#1d4ed8" />
-            </View> */}
+          <View style={[styles.topHero, { backgroundColor: primary }]}>
+            <View style={[styles.topHeroIcon, { backgroundColor: "#4D75F5" }]}>
+              <MaterialIcons name="receipt-long" size={26} color={card} />
+            </View>
             <View style={styles.heroText}>
-              <Text style={styles.heroTitle}>Catat pengeluaran</Text>
-              <Text style={styles.heroSubtitle}>
+              <Text style={[styles.heroTitle, { color: card }]}>
+                Catat pengeluaran tanpa ribet
+              </Text>
+              <Text
+                style={[styles.heroSubtitle, { color: card, opacity: 0.8 }]}
+              >
                 Input sendiri atau tinggal scan pakai AI. Cepat, simpel, beres!
               </Text>
             </View>
+          </View>
+
+          <View style={styles.heroWrapper}>
             <Pressable
-              style={styles.heroButton}
+              style={[styles.belowHero, { backgroundColor: "#FDE047" }]}
               onPress={() =>
                 router.push(isAuthenticated ? "/scan" : "/(auth)/login")
               }
             >
-              <MaterialCommunityIcons
-                name="line-scan"
-                size={18}
-                color="#0f172a"
-              />
-              <Text style={styles.heroButtonText}>
-                {isAuthenticated ? "Scan AI" : "Login buat Scan"}
-              </Text>
+              <View style={styles.belowHeroContent}>
+                <Text style={[styles.belowHeroTitle, { color: text }]}>
+                  {isAuthenticated
+                    ? "🎉  Scan Bill pakai AI, auto kelar tanpa ribet!"
+                    : "🤖  Login dulu buat auto-scan pakai AI"}
+                </Text>
+              </View>
+              <MaterialIcons name="chevron-right" size={16} color={text} />
             </Pressable>
           </View>
 
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Detail Pengeluaran</Text>
+          <View
+            style={[
+              styles.card,
+              styles.highlightCard,
+              { backgroundColor: card },
+            ]}
+          >
+            <Text style={[styles.sectionTitle, { color: text }]}>
+              Detail Pengeluaran
+            </Text>
 
             <View style={styles.field}>
-              <Text style={styles.label}>Deskripsi</Text>
+              <Text style={[styles.label, { color: text }]}>Deskripsi</Text>
               <TextInput
                 value={description}
                 onChangeText={setDescription}
                 placeholder="Contoh: Makan malam di resto"
-                placeholderTextColor="#687076"
+                placeholderTextColor={icon}
                 style={[
                   styles.input,
-                  isDescriptionFocused && styles.inputFocused,
+                  { color: text, borderColor: hexToRgba(text, 0.1) },
+                  isDescriptionFocused && [
+                    styles.inputFocused,
+                    { borderColor: tint },
+                  ],
                 ]}
                 onFocus={() => setDescriptionFocused(true)}
                 onBlur={() => setDescriptionFocused(false)}
@@ -169,14 +221,21 @@ export default function ExpensesScreen() {
             </View>
 
             <View style={styles.field}>
-              <Text style={styles.label}>Jumlah (Rp)</Text>
+              <Text style={[styles.label, { color: text }]}>Jumlah (Rp)</Text>
               <TextInput
                 value={amountInput}
-                onChangeText={setAmountInput}
+                onChangeText={handleAmountChange}
                 placeholder="0"
-                placeholderTextColor="#687076"
-                keyboardType="numeric"
-                style={[styles.input, isAmountFocused && styles.inputFocused]}
+                placeholderTextColor={icon}
+                keyboardType="numbers-and-punctuation"
+                style={[
+                  styles.input,
+                  { color: text, borderColor: hexToRgba(text, 0.1) },
+                  isAmountFocused && [
+                    styles.inputFocused,
+                    { borderColor: tint },
+                  ],
+                ]}
                 onFocus={() => setAmountFocused(true)}
                 onBlur={() => setAmountFocused(false)}
               />
@@ -184,25 +243,44 @@ export default function ExpensesScreen() {
 
             {!hasParticipants ? (
               <Pressable
-                style={styles.participantEmptyState}
+                style={[
+                  styles.participantEmptyState,
+                  {
+                    backgroundColor: hexToRgba(warning, 0.1),
+                    borderColor: hexToRgba(warning, 0.2),
+                  },
+                ]}
                 onPress={() => router.push("/participants")}
               >
                 <View style={styles.participantEmptyContent}>
-                  <View style={[styles.warningIcon, styles.warningPeopleIcon]}>
-                    <MaterialIcons name="group" size={20} color="#7c2d12" />
+                  <View
+                    style={[
+                      styles.warningIcon,
+                      styles.warningPeopleIcon,
+                      { backgroundColor: hexToRgba(warning, 0.15) },
+                    ]}
+                  >
+                    <MaterialIcons name="group" size={20} color={text} />
                   </View>
                   <View style={styles.participantEmptyTextWrapper}>
-                    <Text style={styles.participantEmptyTitle}>
+                    <Text
+                      style={[styles.participantEmptyTitle, { color: text }]}
+                    >
                       Yuk lengkapi daftar teman kamu
                     </Text>
-                    <Text style={styles.participantEmptySubtitle}>
-                      Tambah minimal 2 teman sebelum catat expense.
+                    <Text
+                      style={[
+                        styles.participantEmptySubtitle,
+                        { color: textSecondary },
+                      ]}
+                    >
+                      Tambah minimal 2 teman sebelum mencatat expense.
                     </Text>
                   </View>
                   <MaterialCommunityIcons
                     name="chevron-right"
                     size={20}
-                    color="#7c2d12"
+                    color={text}
                   />
                 </View>
               </Pressable>
@@ -211,7 +289,9 @@ export default function ExpensesScreen() {
             {hasParticipants ? (
               <>
                 <View style={styles.field}>
-                  <Text style={styles.label}>Dibayar oleh</Text>
+                  <Text style={[styles.label, { color: text }]}>
+                    Dibayar oleh
+                  </Text>
                   <View style={styles.choiceGroup}>
                     {participants.map((person) => {
                       const active = paidBy === person.id;
@@ -220,14 +300,28 @@ export default function ExpensesScreen() {
                           key={person.id}
                           style={[
                             styles.choiceChip,
-                            active && styles.choiceChipActive,
+                            {
+                              borderColor: hexToRgba(tint, 0.2),
+                              backgroundColor: card,
+                            },
+                            active && [
+                              styles.choiceChipActive,
+                              {
+                                backgroundColor: hexToRgba(tint, 0.1),
+                                borderColor: tint,
+                              },
+                            ],
                           ]}
                           onPress={() => setPaidBy(person.id)}
                         >
                           <Text
                             style={[
                               styles.choiceText,
-                              active && styles.choiceTextActive,
+                              { color: text },
+                              active && [
+                                styles.choiceTextActive,
+                                { color: primaryDark },
+                              ],
                             ]}
                           >
                             {person.name}
@@ -239,7 +333,9 @@ export default function ExpensesScreen() {
                 </View>
 
                 <View style={styles.field}>
-                  <Text style={styles.label}>Ditanggung oleh</Text>
+                  <Text style={[styles.label, { color: text }]}>
+                    Ditanggung oleh
+                  </Text>
                   <View style={styles.choiceGroup}>
                     {participants.map((person) => {
                       const active = selectedParticipants.includes(person.id);
@@ -248,14 +344,28 @@ export default function ExpensesScreen() {
                           key={person.id}
                           style={[
                             styles.choiceChip,
-                            active && styles.choiceChipActive,
+                            {
+                              borderColor: hexToRgba(tint, 0.2),
+                              backgroundColor: card,
+                            },
+                            active && [
+                              styles.choiceChipActive,
+                              {
+                                backgroundColor: hexToRgba(tint, 0.1),
+                                borderColor: tint,
+                              },
+                            ],
                           ]}
                           onPress={() => toggleParticipant(person.id)}
                         >
                           <Text
                             style={[
                               styles.choiceText,
-                              active && styles.choiceTextActive,
+                              { color: text },
+                              active && [
+                                styles.choiceTextActive,
+                                { color: primaryDark },
+                              ],
                             ]}
                           >
                             {person.name}
@@ -271,60 +381,96 @@ export default function ExpensesScreen() {
             <Pressable
               style={[
                 styles.saveButton,
+                { backgroundColor: tint },
                 (!canSave || !hasParticipants) && styles.disabledButton,
               ]}
               disabled={!canSave || !hasParticipants}
               onPress={handleAddExpense}
             >
-              <Text style={styles.saveText}>Simpan Expense</Text>
+              <Text style={[styles.saveText, { color: card }]}>
+                Simpan Expense
+              </Text>
             </Pressable>
           </View>
 
           <Pressable
             style={[
               styles.additionalButton,
+              {
+                backgroundColor: card,
+                borderColor: hexToRgba(text, 0.1),
+              },
               !hasParticipants && styles.disabledButton,
             ]}
             disabled={!hasParticipants}
             onPress={() => router.push("/additional-expenses")}
           >
-            <View style={styles.additionalIcon}>
-              <MaterialIcons name="request-quote" size={22} color="#7056ec" />
+            <View
+              style={[
+                styles.additionalIcon,
+                { backgroundColor: hexToRgba(tint, 0.1) },
+              ]}
+            >
+              <MaterialIcons name="request-quote" size={22} color={tint} />
             </View>
             <View style={styles.additionalContent}>
               <View
                 style={{ flexDirection: "row", gap: 8, alignItems: "center" }}
               >
-                <Text style={styles.additionalTitle}>Additional expense</Text>
-                <View style={styles.breakdownBadge}>
-                  <Text style={styles.breakdownBadgeText}>Proporsional</Text>
+                <Text style={[styles.additionalTitle, { color: text }]}>
+                  PPN, Service, Promo
+                </Text>
+                <View
+                  style={[
+                    styles.breakdownBadge,
+                    { backgroundColor: hexToRgba(primaryDark, 0.12) },
+                  ]}
+                >
+                  <Text
+                    style={[styles.breakdownBadgeText, { color: primaryDark }]}
+                  >
+                    Proporsional
+                  </Text>
                 </View>
               </View>
-              <Text style={styles.additionalSubtitle}>
+              <Text
+                style={[styles.additionalSubtitle, { color: textSecondary }]}
+              >
                 Tambahkan biaya tambahan (PPN, Service, Promo) dan bagi sesuai
                 proporsi pengeluaran
               </Text>
             </View>
             {additionalExpenses.length > 0 ? (
-              <View style={styles.additionalBadge}>
-                <Text style={styles.additionalBadgeText}>
+              <View
+                style={[styles.additionalBadge, { backgroundColor: primary }]}
+              >
+                <Text style={[styles.additionalBadgeText, { color: card }]}>
                   {additionalExpenses.length}
                 </Text>
               </View>
             ) : null}
           </Pressable>
 
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Pengeluaran Tersimpan</Text>
+          <View style={[styles.card, { backgroundColor: card }]}>
+            <Text style={[styles.sectionTitle, { color: text }]}>
+              Pengeluaran Tersimpan
+            </Text>
             {expenses.length === 0 ? (
-              <View style={styles.emptyState}>
+              <View
+                style={[
+                  styles.emptyState,
+                  { backgroundColor: hexToRgba(text, 0.02) },
+                ]}
+              >
                 <Image
                   source={require("@/assets/images/splitbill-empty-state.png")}
                   style={styles.emptyImage}
                   resizeMode="contain"
                 />
-                <Text style={styles.emptyTitle}>Belum ada data</Text>
-                <Text style={styles.emptyText}>
+                <Text style={[styles.emptyTitle, { color: text }]}>
+                  Belum ada data
+                </Text>
+                <Text style={[styles.emptyText, { color: textSecondary }]}>
                   Mulai catat atau pakai AI Scan buat isi otomatis.
                 </Text>
               </View>
@@ -352,22 +498,37 @@ export default function ExpensesScreen() {
                     ? item.amount / item.participants.length
                     : 0;
                   return (
-                    <View style={styles.expenseCard}>
+                    <View
+                      style={[
+                        styles.expenseCard,
+                        { backgroundColor: hexToRgba(text, 0.02) },
+                      ]}
+                    >
                       <View style={styles.expenseHeader}>
                         <View>
-                          <Text style={styles.expenseTitle}>
+                          <Text style={[styles.expenseTitle, { color: text }]}>
                             {item.description}
                           </Text>
-                          <Text style={styles.expenseMeta}>
+                          <Text
+                            style={[
+                              styles.expenseMeta,
+                              { color: textSecondary },
+                            ]}
+                          >
                             Dibayar oleh {payer?.name ?? "—"}
                           </Text>
                         </View>
-                        <Text style={styles.expenseAmount}>
+                        <Text style={[styles.expenseAmount, { color: tint }]}>
                           {formatCurrency(item.amount)}
                         </Text>
                       </View>
                       <View style={styles.expenseRow}>
-                        <Text style={styles.expenseSplit}>
+                        <Text
+                          style={[
+                            styles.expenseSplit,
+                            { color: textSecondary },
+                          ]}
+                        >
                           {item.participants.length} orang •{" "}
                           {formatCurrency(amountPerPerson)}/orang
                         </Text>
@@ -377,9 +538,17 @@ export default function ExpensesScreen() {
                           {participantDetails.map((detail) => (
                             <View
                               key={`${item.id}-${detail.id}`}
-                              style={styles.participantPill}
+                              style={[
+                                styles.participantPill,
+                                { backgroundColor: hexToRgba(tint, 0.1) },
+                              ]}
                             >
-                              <Text style={styles.participantPillText}>
+                              <Text
+                                style={[
+                                  styles.participantPillText,
+                                  { color: primaryDark },
+                                ]}
+                              >
                                 {detail.name}
                               </Text>
                             </View>
@@ -389,22 +558,24 @@ export default function ExpensesScreen() {
                       <View style={styles.expenseActions}>
                         <Pressable
                           onPress={() => handleEditExpense(item)}
-                          style={styles.editButtonIcon}
+                          style={[
+                            styles.editButtonIcon,
+                            { backgroundColor: hexToRgba(tint, 0.2) },
+                          ]}
                         >
-                          <MaterialIcons
-                            name="edit"
-                            size={16}
-                            color="#2563eb"
-                          />
+                          <MaterialIcons name="edit" size={16} color={tint} />
                         </Pressable>
                         <Pressable
                           onPress={() => removeExpense(item.id)}
-                          style={styles.deleteButtonIcon}
+                          style={[
+                            styles.deleteButtonIcon,
+                            { backgroundColor: hexToRgba(error, 0.2) },
+                          ]}
                         >
                           <MaterialIcons
                             name="delete"
                             size={16}
-                            color="#ef4444"
+                            color={error}
                           />
                         </Pressable>
                       </View>
@@ -416,16 +587,27 @@ export default function ExpensesScreen() {
           </View>
         </ScrollView>
 
-        <View style={styles.footer}>
+        <View
+          style={[
+            styles.footer,
+            {
+              backgroundColor: background,
+              borderTopColor: hexToRgba(text, 0.1),
+            },
+          ]}
+        >
           <Pressable
             style={[
               styles.primaryButton,
+              { backgroundColor: tint },
               expenses.length === 0 && styles.disabledButton,
             ]}
             disabled={expenses.length === 0}
             onPress={() => setBottomSheetVisible(true)}
           >
-            <Text style={styles.primaryText}>Lihat Ringkasan</Text>
+            <Text style={[styles.primaryText, { color: card }]}>
+              Lihat Ringkasan
+            </Text>
           </Pressable>
         </View>
       </KeyboardAvoidingView>
@@ -458,25 +640,43 @@ export default function ExpensesScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#f6fafb",
   },
   wrapper: {
     flex: 1,
   },
   container: {
     padding: 8,
-    gap: 16,
+    gap: 18,
+    paddingTop: 130,
   },
-  hero: {
-    backgroundColor: "#1d4ed8",
-    borderRadius: 20,
+  heroWrapper: {
+    position: "relative",
+    zIndex: 1,
+    marginBottom: 16,
+  },
+  topHero: {
     padding: 20,
     flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 14,
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 0,
+    minHeight: 150,
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+    overflow: "hidden",
+  },
+  topHeroIcon: {
+    width: 52,
+    height: 52,
+    borderRadius: 16,
     alignItems: "center",
-    gap: 12,
+    justifyContent: "center",
   },
   heroIcon: {
-    backgroundColor: "#e0f2fe",
     width: 48,
     height: 48,
     borderRadius: 24,
@@ -488,38 +688,55 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   heroTitle: {
-    color: "#ffffff",
     fontSize: 16,
     fontFamily: Poppins.semibold,
   },
   heroSubtitle: {
-    color: "#ffffff",
-    opacity: 0.8,
-    fontSize: 13,
+    fontSize: 14,
     fontFamily: Poppins.regular,
   },
-  heroButton: {
-    backgroundColor: "#facc15",
-    borderRadius: 999,
-    paddingHorizontal: 14,
-    paddingVertical: 10,
+  belowHero: {
+    position: "absolute",
+    bottom: -34,
+    left: 0,
+    right: 0,
+    borderTopLeftRadius: 12,
+    borderTopRightRadius: 12,
+    paddingHorizontal: 20,
+    paddingVertical: 12,
     flexDirection: "row",
     alignItems: "center",
-    gap: 8,
+    justifyContent: "space-between",
+    gap: 14,
+    zIndex: 1,
   },
-  heroButtonText: {
-    color: "#0f172a",
-    fontFamily: Poppins.semibold,
+  belowHeroTitle: {
+    fontSize: 14,
+    fontFamily: Poppins.medium,
+  },
+  belowHeroIcon: {
+    width: 48,
+    height: 48,
+    borderRadius: 24,
+    alignItems: "center",
+    justifyContent: "center",
+  },
+  belowHeroContent: {
+    flex: 1,
+    gap: 4,
   },
   card: {
-    backgroundColor: "#ffffff",
     borderRadius: 12,
     padding: 16,
     gap: 16,
   },
+  highlightCard: {
+    zIndex: 2,
+    borderTopLeftRadius: 0,
+    borderTopRightRadius: 0,
+  },
   sectionTitle: {
     fontSize: 18,
-    color: "#0f172a",
     fontFamily: Poppins.semibold,
   },
   field: {
@@ -527,20 +744,16 @@ const styles = StyleSheet.create({
   },
   label: {
     fontSize: 14,
-    color: "#1f2937",
     fontFamily: Poppins.medium,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#e2e8f0",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
   },
-  inputFocused: {
-    borderColor: "#2563eb",
-  },
+  inputFocused: {},
   choiceGroup: {
     flexDirection: "row",
     flexWrap: "wrap",
@@ -549,46 +762,33 @@ const styles = StyleSheet.create({
   choiceChip: {
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "#d4d4ff",
     paddingHorizontal: 16,
     paddingVertical: 8,
-    backgroundColor: "#ffffff",
   },
-  choiceChipActive: {
-    backgroundColor: "#ede9fe",
-    borderColor: "#8b5cf6",
-  },
+  choiceChipActive: {},
   choiceText: {
-    color: "#1f2937",
     fontFamily: Poppins.medium,
   },
   choiceTextActive: {
-    color: "#4c1d95",
     fontFamily: Poppins.medium,
   },
   saveButton: {
-    backgroundColor: "#2563eb",
     paddingVertical: 15,
     borderRadius: 12,
     alignItems: "center",
   },
   saveText: {
-    color: "#ffffff",
     fontSize: 16,
     fontFamily: Poppins.semibold,
   },
   helperText: {
     fontSize: 13,
-    color: "#64748b",
     fontFamily: Poppins.regular,
   },
   participantEmptyState: {
-    marginTop: 8,
     padding: 16,
-    borderRadius: 14,
-    backgroundColor: "#fefce8",
+    borderRadius: 16,
     borderWidth: 1,
-    borderColor: "#fef08a",
     gap: 10,
     flexDirection: "row",
     alignItems: "center",
@@ -607,11 +807,9 @@ const styles = StyleSheet.create({
   },
   participantEmptyTitle: {
     fontSize: 14,
-    color: "#0f172a",
     fontFamily: Poppins.semibold,
   },
   participantEmptySubtitle: {
-    color: "#475569",
     fontSize: 12,
     fontFamily: Poppins.regular,
   },
@@ -621,16 +819,11 @@ const styles = StyleSheet.create({
     borderRadius: 12,
     alignItems: "center",
     justifyContent: "center",
-    backgroundColor: "rgba(34,197,94,0.12)",
   },
-  warningPeopleIcon: {
-    backgroundColor: "rgba(250,204,21,0.12)",
-  },
+  warningPeopleIcon: {},
   additionalButton: {
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
-    backgroundColor: "#ffffff",
     padding: 16,
     flexDirection: "row",
     alignItems: "center",
@@ -640,7 +833,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 22,
-    backgroundColor: "#ede9fe",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -650,11 +842,9 @@ const styles = StyleSheet.create({
   },
   additionalTitle: {
     fontFamily: Poppins.semibold,
-    color: "#0f172a",
   },
   additionalSubtitle: {
     fontFamily: Poppins.regular,
-    color: "#64748b",
     fontSize: 12,
   },
   additionalBadge: {
@@ -662,31 +852,26 @@ const styles = StyleSheet.create({
     paddingHorizontal: 8,
     paddingVertical: 4,
     borderRadius: 999,
-    backgroundColor: "#7056ec",
     alignItems: "center",
     justifyContent: "center",
   },
   additionalBadgeText: {
-    color: "#ffffff",
     fontFamily: Poppins.semibold,
     fontSize: 12,
   },
   breakdownBadge: {
     alignSelf: "center",
     borderRadius: 999,
-    backgroundColor: "rgba(124,58,237,0.12)",
     paddingHorizontal: 8,
     paddingVertical: 2,
   },
   breakdownBadgeText: {
     fontSize: 10,
     fontWeight: "600",
-    color: "#7c3aed",
   },
   expenseCard: {
     borderRadius: 12,
     padding: 16,
-    backgroundColor: "#f8fafc",
     gap: 10,
     marginBottom: 12,
   },
@@ -697,12 +882,10 @@ const styles = StyleSheet.create({
   },
   expenseTitle: {
     fontSize: 16,
-    color: "#0f172a",
     fontFamily: Poppins.semibold,
   },
   expenseMeta: {
     fontSize: 12,
-    color: "#64748b",
     fontFamily: Poppins.regular,
   },
   expenseRow: {
@@ -717,22 +900,18 @@ const styles = StyleSheet.create({
   },
   expenseAmount: {
     fontSize: 18,
-    color: "#2563eb",
     fontFamily: Poppins.semibold,
   },
   expenseSplit: {
     fontSize: 13,
-    color: "#475569",
     fontFamily: Poppins.regular,
   },
   participantPill: {
-    backgroundColor: "#ede9fe",
     borderRadius: 999,
     paddingHorizontal: 8,
     paddingVertical: 4,
   },
   participantPillText: {
-    color: "#4c1d95",
     fontSize: 12,
     fontFamily: Poppins.medium,
   },
@@ -746,7 +925,6 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 20,
-    backgroundColor: "#e0f2fe", // Light blue
     alignItems: "center",
     justifyContent: "center",
   },
@@ -754,14 +932,12 @@ const styles = StyleSheet.create({
     width: 32,
     height: 32,
     borderRadius: 20,
-    backgroundColor: "#fee2e2", // Light red
     alignItems: "center",
     justifyContent: "center",
   },
   emptyState: {
     padding: 16,
     borderRadius: 12,
-    backgroundColor: "#f8fafc",
     gap: 6,
     alignItems: "center",
   },
@@ -771,30 +947,24 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 16,
-    color: "#0f172a",
     fontFamily: Poppins.semibold,
   },
   emptyText: {
     fontSize: 12,
-    color: "#64748b",
     textAlign: "center",
     fontFamily: Poppins.regular,
   },
   footer: {
     padding: 16,
-    backgroundColor: "#f6fafb",
     borderTopWidth: 1,
-    borderTopColor: "#e2e8f0",
   },
 
   primaryButton: {
-    backgroundColor: "#7056ec",
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: "center",
   },
   primaryText: {
-    color: "#ffffff",
     fontSize: 16,
     fontFamily: Poppins.semibold,
   },

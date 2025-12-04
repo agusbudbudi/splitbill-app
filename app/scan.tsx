@@ -1,4 +1,6 @@
-import { FontAwesome5, MaterialIcons } from "@expo/vector-icons";
+import CameraIcon from "@/components/ui/camera-icon";
+import GalleryIcon from "@/components/ui/gallery-icon";
+import { MaterialIcons } from "@expo/vector-icons";
 import { readAsStringAsync } from "expo-file-system/legacy";
 import * as ImagePicker from "expo-image-picker";
 import { useNavigation, useRouter } from "expo-router";
@@ -63,7 +65,7 @@ export default function ScanScreen() {
   useLayoutEffect(() => {
     navigation.setOptions({
       title: "Scan Bill",
-      headerStyle: { backgroundColor: "#1E4ED8", borderBottomWidth: 0 },
+      headerStyle: { backgroundColor: "#3462F2", borderBottomWidth: 0 },
       headerTintColor: "#ffffff",
       headerTitleStyle: { color: "#ffffff" },
       headerBackTitleStyle: { color: "#ffffff" },
@@ -73,6 +75,7 @@ export default function ScanScreen() {
   const { participants, addExpense } = useSplitBill();
 
   const [permissionChecked, setPermissionChecked] = useState(false);
+  const [cameraPermissionChecked, setCameraPermissionChecked] = useState(false);
   const [selectedAsset, setSelectedAsset] =
     useState<ImagePicker.ImagePickerAsset | null>(null);
   const [scanItems, setScanItems] = useState<ScanItem[]>([]);
@@ -122,6 +125,16 @@ export default function ScanScreen() {
     return true;
   };
 
+  const requestCameraPermission = async () => {
+    const { status } = await ImagePicker.requestCameraPermissionsAsync();
+    setCameraPermissionChecked(true);
+    if (status !== "granted") {
+      setError("Izin akses kamera dibutuhkan untuk mengambil foto.");
+      return false;
+    }
+    return true;
+  };
+
   const handlePickImage = async () => {
     setError(null);
     setSuccess(null);
@@ -135,6 +148,30 @@ export default function ScanScreen() {
       mediaTypes: ImagePicker.MediaTypeOptions.Images,
       allowsEditing: false,
       quality: 0.8,
+      base64: true,
+    });
+
+    if (result.canceled) return;
+
+    const asset = result.assets[0];
+    setSelectedAsset(asset);
+    setScanItems([]);
+  };
+
+  const handleTakePhoto = async () => {
+    setError(null);
+    setSuccess(null);
+
+    if (!cameraPermissionChecked) {
+      const allowed = await requestCameraPermission();
+      if (!allowed) return;
+    }
+
+    const result = await ImagePicker.launchCameraAsync({
+      mediaTypes: ImagePicker.MediaTypeOptions.Images,
+      allowsEditing: false,
+      quality: 0.8,
+      base64: true,
     });
 
     if (result.canceled) return;
@@ -170,9 +207,19 @@ export default function ScanScreen() {
     setSuccess(null);
 
     try {
-      const base64 = await readAssetAsBase64(selectedAsset.uri);
+      let base64 = selectedAsset.base64;
+      if (!base64) {
+        base64 = await readAssetAsBase64(selectedAsset.uri);
+      }
 
-      const mimeType = selectedAsset.mimeType ?? "image/jpeg";
+      let mimeType = selectedAsset.mimeType;
+      if (!mimeType) {
+        const ext = selectedAsset.uri.split(".").pop()?.toLowerCase();
+        if (ext === "png") mimeType = "image/png";
+        else if (ext === "webp") mimeType = "image/webp";
+        else if (ext === "heic") mimeType = "image/heic";
+        else mimeType = "image/jpeg";
+      }
 
       const response = await fetch(`${BASE_URL}/api/gemini-scan`, {
         method: "POST",
@@ -330,10 +377,22 @@ export default function ScanScreen() {
           <Text style={styles.cardSubtitle}>
             Pastikan teksnya jelas dan tidak blur ya.
           </Text>
-          <Pressable style={styles.uploadButton} onPress={handlePickImage}>
-            <FontAwesome5 name="cloud-upload-alt" size={18} color="#0f172a" />
-            <Text style={styles.uploadText}>Pilih dari galeri</Text>
-          </Pressable>
+          <View style={{ flexDirection: "row", gap: 12 }}>
+            <Pressable
+              style={[styles.uploadButton, { flex: 1 }]}
+              onPress={handlePickImage}
+            >
+              <GalleryIcon size={18} color="#0f172a" />
+              <Text style={styles.uploadText}>Galeri</Text>
+            </Pressable>
+            <Pressable
+              style={[styles.uploadButton, { flex: 1 }]}
+              onPress={handleTakePhoto}
+            >
+              <CameraIcon size={18} color="#0f172a" />
+              <Text style={styles.uploadText}>Kamera</Text>
+            </Pressable>
+          </View>
           {renderSelectedImage()}
         </View>
 
@@ -471,11 +530,12 @@ const styles = StyleSheet.create({
     padding: 8,
     gap: 18,
     paddingTop: 100,
+    paddingBottom: 100,
     zIndex: 1,
   },
 
   hero: {
-    backgroundColor: "#1E4ED8",
+    backgroundColor: "#3462F2",
     padding: 20,
     flexDirection: "row",
     alignItems: "flex-start",
@@ -665,7 +725,7 @@ const styles = StyleSheet.create({
   },
   saveButton: {
     marginTop: 12,
-    backgroundColor: "#7056ec",
+    backgroundColor: "#3462F2",
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",
@@ -728,7 +788,7 @@ const styles = StyleSheet.create({
     marginLeft: 8,
   },
   scanListCountText: {
-    color: "#7c3aed",
+    color: "#3462F2",
     fontWeight: "600",
     fontSize: 12,
   },

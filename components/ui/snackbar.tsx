@@ -24,7 +24,7 @@ const SNACKBAR_CONFIG = {
   },
   info: {
     icon: "info",
-    backgroundColor: "#3b82f6",
+    backgroundColor: "#3462F2",
     color: "#ffffff",
   },
   warning: {

@@ -83,9 +83,9 @@ function applyMainExpenses(
 
   expenses.forEach((expense) => {
     const { id, description, amount, paidBy, participants } = expense;
-    if (amount <= 0) {
-      return;
-    }
+    // if (amount <= 0) {
+    //   return;
+    // }
 
     const validParticipants = participants.filter((participantId) => participantMap[participantId]);
     if (validParticipants.length === 0) {
@@ -135,9 +135,9 @@ function applyAdditionalExpenses(
 
   additionalExpenses.forEach((additional) => {
     const { id, description, amount, paidBy, participants } = additional;
-    if (amount <= 0) {
-      return;
-    }
+    // if (amount <= 0) {
+    //   return;
+    // }
 
     const validParticipants = participants.filter((participantId) => participantMap[participantId]);
     if (validParticipants.length === 0) {

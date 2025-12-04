@@ -15,6 +15,8 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "@/context/auth-context";
+import { useThemeColor } from "@/hooks/use-theme-color";
+import { hexToRgba } from "@/lib/utils/colors";
 
 const BANNER_URI = "https://splitbill-alpha.vercel.app/img/banner-profile.png";
 const FOOTER_LOGO_URI =
@@ -24,6 +26,15 @@ export default function ProfileScreen() {
   const router = useRouter();
   const { user, isAuthenticated, logout, isSubmitting, refreshUser } =
     useAuth();
+
+  const background = useThemeColor({}, 'background');
+  const card = useThemeColor({}, 'card');
+  const text = useThemeColor({}, 'text');
+  const textSecondary = useThemeColor({}, 'textSecondary');
+  const tint = useThemeColor({}, 'tint');
+  const error = useThemeColor({}, 'error');
+  const icon = useThemeColor({}, 'icon');
+  const success = useThemeColor({}, 'success');
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -59,9 +70,9 @@ export default function ProfileScreen() {
 
   if (!isAuthenticated) {
     return (
-      <SafeAreaView edges={["left", "right", "bottom"]} style={styles.safeArea}>
+      <SafeAreaView edges={["left", "right", "bottom"]} style={[styles.safeArea, { backgroundColor: background }]}>
         <View style={styles.loadingContainer}>
-          <ActivityIndicator color="#2563eb" />
+          <ActivityIndicator color={tint} />
         </View>
       </SafeAreaView>
     );
@@ -99,86 +110,88 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <SafeAreaView edges={["left", "right", "bottom"]} style={styles.safeArea}>
+    <SafeAreaView edges={["left", "right", "bottom"]} style={[styles.safeArea, { backgroundColor: background }]}>
       <ScrollView contentContainerStyle={styles.container}>
         <Image source={{ uri: BANNER_URI }} style={styles.banner} />
 
-        <View style={styles.profileCard}>
+        <View style={[styles.profileCard, { backgroundColor: card }]}>
           <View style={styles.profileMain}>
-            <View style={styles.profileAvatar}>
-              <MaterialIcons name="person" size={24} color="#0f172a" />
+            <View style={[styles.profileAvatar, { backgroundColor: hexToRgba(tint, 0.1) }]}>
+              <MaterialIcons name="person" size={24} color={text} />
             </View>
             <View style={styles.profileInfo}>
-              <Text style={styles.name}>
+              <Text style={[styles.name, { color: text }]}>
                 {user?.name?.trim() || "Pengguna Split Bill"}
               </Text>
-              <Text style={styles.email}>{user?.email || "-"}</Text>
+              <Text style={[styles.email, { color: textSecondary }]}>{user?.email || "-"}</Text>
             </View>
           </View>
           <Pressable
-            style={[styles.logoutButton, isSubmitting && styles.logoutDisabled]}
+            style={[styles.logoutButton, { backgroundColor: hexToRgba(error, 0.16) }, isSubmitting && styles.logoutDisabled]}
             onPress={handleLogout}
             disabled={isSubmitting}
           >
             <MaterialIcons
               name={isSubmitting ? "hourglass-top" : "logout"}
               size={16}
-              color="#ef4444"
+              color={error}
             />
           </Pressable>
         </View>
 
-        <View style={styles.menuCard}>
+        <View style={[styles.menuCard, { backgroundColor: card, borderBottomColor: background }]}>
           {primaryMenus.map((item, index) => (
             <Pressable
               key={item.label}
               style={[
                 styles.menuItem,
+                { borderBottomColor: background },
                 index === primaryMenus.length - 1 && styles.menuItemLast,
               ]}
               onPress={item.onPress}
             >
               <View style={styles.menuLeft}>
-                <View style={styles.menuIconWrap}>
-                  <MaterialIcons name={item.icon} size={16} color="#2563eb" />
+                <View style={[styles.menuIconWrap, { backgroundColor: hexToRgba(tint, 0.12) }]}>
+                  <MaterialIcons name={item.icon} size={16} color={tint} />
                 </View>
-                <Text style={styles.menuText}>{item.label}</Text>
+                <Text style={[styles.menuText, { color: text }]}>{item.label}</Text>
               </View>
-              <MaterialIcons name="chevron-right" size={16} color="#94a3b8" />
+              <MaterialIcons name="chevron-right" size={16} color={icon} />
             </Pressable>
           ))}
         </View>
 
-        <View style={styles.menuCard}>
+        <View style={[styles.menuCard, { backgroundColor: card }]}>
           {secondaryMenus.map((item, index) => (
             <Pressable
               key={item.label}
               style={[
                 styles.menuItem,
+                { borderBottomColor: background },
                 index === secondaryMenus.length - 1 && styles.menuItemLast,
               ]}
               onPress={item.onPress}
             >
               <View style={styles.menuLeft}>
-                <View style={styles.menuIconWrapAlt}>
-                  <MaterialIcons name={item.icon} size={16} color="#7c3aed" />
+                <View style={[styles.menuIconWrap, { backgroundColor: hexToRgba(tint, 0.12) }]}>
+                  <MaterialIcons name={item.icon} size={16} color={tint} />
                 </View>
-                <Text style={styles.menuText}>{item.label}</Text>
+                <Text style={[styles.menuText, { color: text }]}>{item.label}</Text>
               </View>
-              <MaterialIcons name="chevron-right" size={16} color="#94a3b8" />
+              <MaterialIcons name="chevron-right" size={16} color={icon} />
             </Pressable>
           ))}
         </View>
 
-        <View style={styles.contactCard}>
-          <Text style={styles.contactTitle}>Kontak Kami</Text>
+        <View style={[styles.contactCard, { backgroundColor: card }]}>
+          <Text style={[styles.contactTitle, { color: text }]}>Kontak Kami</Text>
           <View style={styles.contactRow}>
-            <MaterialCommunityIcons name="whatsapp" size={20} color="#22c55e" />
-            <Text style={styles.contactText}>WhatsApp: 0855-5949-6968</Text>
+            <MaterialCommunityIcons name="whatsapp" size={20} color={success} />
+            <Text style={[styles.contactText, { color: textSecondary }]}>WhatsApp: 0855-5949-6968</Text>
           </View>
           <View style={styles.contactRow}>
-            <MaterialIcons name="email" size={18} color="#2563eb" />
-            <Text style={styles.contactText}>Email: agusbudbudi@gmail.com</Text>
+            <MaterialIcons name="email" size={18} color={tint} />
+            <Text style={[styles.contactText, { color: textSecondary }]}>Email: agusbudbudi@gmail.com</Text>
           </View>
           <View style={styles.contactRow}>
             <MaterialCommunityIcons
@@ -186,21 +199,21 @@ export default function ProfileScreen() {
               size={20}
               color="#f97316"
             />
-            <Text style={styles.contactText}>Instagram: @splitbill.app</Text>
+            <Text style={[styles.contactText, { color: textSecondary }]}>Instagram: @splitbill.app</Text>
           </View>
         </View>
 
         <View style={styles.footerProfile}>
           <View style={styles.footerLogoRow}>
-            <Text style={styles.footerTitle}>Tentang</Text>
+            <Text style={[styles.footerTitle, { color: text }]}>Tentang</Text>
             <Image
               source={{ uri: FOOTER_LOGO_URI }}
               style={styles.footerLogo}
               resizeMode="contain"
             />
-            <Text style={styles.footerBrand}>SplitBill</Text>
+            <Text style={[styles.footerBrand, { color: text }]}>SplitBill</Text>
           </View>
-          <Text style={styles.footerDescription}>
+          <Text style={[styles.footerDescription, { color: textSecondary }]}>
             Split bill jadi mudah, catat, bagi, dan selesaikan tanpa ribet.
           </Text>
         </View>
@@ -212,7 +225,6 @@ export default function ProfileScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#f6fafb",
   },
   loadingContainer: {
     flex: 1,
@@ -229,7 +241,6 @@ const styles = StyleSheet.create({
     borderRadius: 14,
   },
   profileCard: {
-    backgroundColor: "#ffffff",
     borderRadius: 12,
     padding: 16,
     flexDirection: "row",
@@ -245,7 +256,6 @@ const styles = StyleSheet.create({
     width: 44,
     height: 44,
     borderRadius: 16,
-    backgroundColor: "#e0f2fe",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -255,17 +265,14 @@ const styles = StyleSheet.create({
   name: {
     fontSize: 18,
     fontWeight: "700",
-    color: "#0f172a",
   },
   email: {
     fontSize: 14,
-    color: "#64748b",
   },
   logoutButton: {
     width: 44,
     height: 44,
     borderRadius: 16,
-    backgroundColor: "rgba(248,113,113,0.16)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -273,7 +280,6 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   menuCard: {
-    backgroundColor: "#ffffff",
     borderRadius: 12,
     paddingVertical: 4,
     paddingHorizontal: 16,
@@ -284,7 +290,6 @@ const styles = StyleSheet.create({
     justifyContent: "space-between",
     paddingVertical: 16,
     borderBottomWidth: 1,
-    borderBottomColor: "#F6FAFB",
   },
   menuItemLast: {
     borderBottomWidth: 0,
@@ -298,24 +303,13 @@ const styles = StyleSheet.create({
     width: 30,
     height: 30,
     borderRadius: 10,
-    backgroundColor: "rgba(37,99,235,0.12)",
-    alignItems: "center",
-    justifyContent: "center",
-  },
-  menuIconWrapAlt: {
-    width: 30,
-    height: 30,
-    borderRadius: 10,
-    backgroundColor: "rgba(124,58,237,0.12)",
     alignItems: "center",
     justifyContent: "center",
   },
   menuText: {
     fontSize: 16,
-    color: "#0f172a",
   },
   contactCard: {
-    backgroundColor: "#ffffff",
     borderRadius: 12,
     padding: 20,
     gap: 10,
@@ -323,7 +317,6 @@ const styles = StyleSheet.create({
   contactTitle: {
     fontSize: 16,
     fontWeight: "700",
-    color: "#0f172a",
   },
   contactRow: {
     flexDirection: "row",
@@ -332,7 +325,6 @@ const styles = StyleSheet.create({
   },
   contactText: {
     fontSize: 14,
-    color: "#475569",
   },
   footerProfile: {
     alignItems: "center",
@@ -347,7 +339,6 @@ const styles = StyleSheet.create({
   footerTitle: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#0f172a",
   },
   footerLogo: {
     width: 24,
@@ -356,11 +347,9 @@ const styles = StyleSheet.create({
   footerBrand: {
     fontSize: 14,
     fontWeight: "700",
-    color: "#0f172a",
   },
   footerDescription: {
     fontSize: 12,
-    color: "#475569",
     lineHeight: 20,
     textAlign: "center",
     paddingHorizontal: 24,

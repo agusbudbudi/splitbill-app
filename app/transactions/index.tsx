@@ -284,6 +284,7 @@ const styles = StyleSheet.create({
     flexGrow: 1,
     padding: 16,
     gap: 12,
+    paddingBottom: 100,
   },
   list: {
     gap: 12,
@@ -298,11 +299,11 @@ const styles = StyleSheet.create({
     shadowColor: "#000",
     shadowOffset: {
       width: 0,
-      height: 1,
+      height: 0,
     },
-    shadowOpacity: 0.05,
-    shadowRadius: 1.41,
-    elevation: 2,
+    shadowOpacity: 0.02,
+    shadowRadius: 2,
+    elevation: 15,
   },
   cardTopRow: {
     flexDirection: "row",

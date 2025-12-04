@@ -16,11 +16,13 @@ import { SafeAreaView } from "react-native-safe-area-context";
 
 import { Poppins } from "@/constants/fonts";
 import { useSplitBill } from "@/context/split-bill-context";
+import { useThemeColor } from "@/hooks/use-theme-color";
 import type {
   BankPaymentMethod,
   EWalletPaymentMethod,
   PaymentMethod,
 } from "@/lib/split-bill/types";
+import { hexToRgba } from "@/lib/utils/colors";
 
 const bankSuggestions = [
   "BCA",
@@ -62,6 +64,16 @@ export default function PaymentMethodsScreen() {
     removePaymentMethod,
     togglePaymentMethodSelection,
   } = useSplitBill();
+
+  const background = useThemeColor({}, "background");
+  const card = useThemeColor({}, "card");
+  const text = useThemeColor({}, "text");
+  const textSecondary = useThemeColor({}, "textSecondary");
+  const tint = useThemeColor({}, "tint");
+  const error = useThemeColor({}, "error");
+  const icon = useThemeColor({}, "icon");
+  const success = useThemeColor({}, "success");
+  const primaryDark = useThemeColor({}, "primaryDark");
 
   const [methodType, setMethodType] = useState<MethodType>("bank_transfer");
   const [ownerName, setOwnerName] = useState("");
@@ -175,39 +187,58 @@ export default function PaymentMethodsScreen() {
   const methodCountLabel = selectedPaymentMethodIds.length;
 
   return (
-    <SafeAreaView edges={["left", "right", "bottom"]} style={styles.safeArea}>
+    <SafeAreaView
+      edges={["left", "right", "bottom"]}
+      style={[styles.safeArea, { backgroundColor: background }]}
+    >
       <ScrollView contentContainerStyle={styles.container}>
-        <View style={styles.hero}>
-          <View style={styles.heroIcon}>
-            <MaterialIcons name="wallet" size={26} color="#2563eb" />
+        <View style={[styles.hero, { backgroundColor: hexToRgba(tint, 0.05) }]}>
+          <View
+            style={[styles.heroIcon, { backgroundColor: hexToRgba(tint, 0.2) }]}
+          >
+            <MaterialIcons name="wallet" size={26} color={tint} />
           </View>
           <View style={styles.heroText}>
-            <Text style={styles.heroTitle}>Kelola Metode Pembayaran</Text>
-            <Text style={styles.heroSubtitle}>
+            <Text style={[styles.heroTitle, { color: text }]}>
+              Kelola Metode Pembayaran
+            </Text>
+            <Text style={[styles.heroSubtitle, { color: text, opacity: 0.6 }]}>
               Simpan detail pembayaran favoritmu dan pilih untuk dibagikan ke
               teman.
             </Text>
           </View>
         </View>
 
-        <View style={styles.card}>
-          <View style={styles.methodSwitch}>
+        <View style={[styles.card, { backgroundColor: card }]}>
+          <View
+            style={[
+              styles.methodSwitch,
+              { backgroundColor: hexToRgba(text, 0.02) },
+            ]}
+          >
             <Pressable
               style={[
                 styles.methodChip,
-                methodType === "bank_transfer" && styles.methodChipActive,
+                methodType === "bank_transfer" && [
+                  styles.methodChipActive,
+                  { backgroundColor: card },
+                ],
               ]}
               onPress={() => handleSwitchMethod("bank_transfer")}
             >
               <MaterialCommunityIcons
                 name="bank"
                 size={16}
-                color={methodType === "bank_transfer" ? "#7056ec" : "#64748b"}
+                color={methodType === "bank_transfer" ? tint : textSecondary}
               />
               <Text
                 style={[
                   styles.methodChipText,
-                  methodType === "bank_transfer" && styles.methodChipTextActive,
+                  { color: textSecondary },
+                  methodType === "bank_transfer" && [
+                    styles.methodChipTextActive,
+                    { color: text },
+                  ],
                 ]}
               >
                 Bank Transfer
@@ -216,19 +247,26 @@ export default function PaymentMethodsScreen() {
             <Pressable
               style={[
                 styles.methodChip,
-                methodType === "ewallet" && styles.methodChipActive,
+                methodType === "ewallet" && [
+                  styles.methodChipActive,
+                  { backgroundColor: card },
+                ],
               ]}
               onPress={() => handleSwitchMethod("ewallet")}
             >
               <MaterialCommunityIcons
                 name="cellphone"
                 size={16}
-                color={methodType === "ewallet" ? "#7056ec" : "#64748b"}
+                color={methodType === "ewallet" ? tint : textSecondary}
               />
               <Text
                 style={[
                   styles.methodChipText,
-                  methodType === "ewallet" && styles.methodChipTextActive,
+                  { color: textSecondary },
+                  methodType === "ewallet" && [
+                    styles.methodChipTextActive,
+                    { color: text },
+                  ],
                 ]}
               >
                 e-Wallet
@@ -237,30 +275,45 @@ export default function PaymentMethodsScreen() {
           </View>
 
           {errorMessage ? (
-            <Text style={styles.errorText}>{errorMessage}</Text>
+            <Text style={[styles.errorText, { color: error }]}>
+              {errorMessage}
+            </Text>
           ) : null}
 
           <View style={styles.field}>
-            <Text style={styles.label}>Nama pemilik</Text>
+            <Text style={[styles.label, { color: textSecondary }]}>
+              Nama pemilik
+            </Text>
             <TextInput
               value={ownerName}
               onChangeText={setOwnerName}
-              style={styles.input}
+              style={[
+                styles.input,
+                { borderColor: hexToRgba(text, 0.1), backgroundColor: card },
+              ]}
               placeholder="Contoh: Agung Nugraha"
-              placeholderTextColor="#687076"
+              placeholderTextColor={icon}
             />
           </View>
 
           {methodType === "bank_transfer" ? (
             <>
               <View style={styles.field}>
-                <Text style={styles.label}>Nama bank</Text>
+                <Text style={[styles.label, { color: textSecondary }]}>
+                  Nama bank
+                </Text>
                 <TextInput
                   value={bankName}
                   onChangeText={setBankName}
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    {
+                      borderColor: hexToRgba(text, 0.1),
+                      backgroundColor: card,
+                    },
+                  ]}
                   placeholder="Contoh: BCA"
-                  placeholderTextColor="#687076"
+                  placeholderTextColor={icon}
                   onFocus={() => setShowBankSuggestions(true)}
                 />
                 {showBankSuggestions ? (
@@ -273,14 +326,28 @@ export default function PaymentMethodsScreen() {
                           key={bank}
                           style={[
                             styles.suggestionChip,
-                            active && styles.suggestionChipActive,
+                            {
+                              borderColor: hexToRgba(text, 0.1),
+                              backgroundColor: card,
+                            },
+                            active && [
+                              styles.suggestionChipActive,
+                              {
+                                backgroundColor: hexToRgba(tint, 0.1),
+                                borderColor: tint,
+                              },
+                            ],
                           ]}
                           onPress={() => setBankName(bank)}
                         >
                           <Text
                             style={[
                               styles.suggestionText,
-                              active && styles.suggestionTextActive,
+                              { color: textSecondary },
+                              active && [
+                                styles.suggestionTextActive,
+                                { color: primaryDark },
+                              ],
                             ]}
                           >
                             {bank}
@@ -293,15 +360,23 @@ export default function PaymentMethodsScreen() {
               </View>
 
               <View style={styles.field}>
-                <Text style={styles.label}>Nomor rekening</Text>
+                <Text style={[styles.label, { color: textSecondary }]}>
+                  Nomor rekening
+                </Text>
                 <TextInput
                   value={accountNumber}
                   onChangeText={(value) =>
                     setAccountNumber(sanitizeNumber(value))
                   }
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    {
+                      borderColor: hexToRgba(text, 0.1),
+                      backgroundColor: card,
+                    },
+                  ]}
                   placeholder="Contoh: 1234567890"
-                  placeholderTextColor="#687076"
+                  placeholderTextColor={icon}
                   keyboardType="numeric"
                 />
               </View>
@@ -309,13 +384,21 @@ export default function PaymentMethodsScreen() {
           ) : (
             <>
               <View style={styles.field}>
-                <Text style={styles.label}>Nama e-wallet</Text>
+                <Text style={[styles.label, { color: textSecondary }]}>
+                  Nama e-wallet
+                </Text>
                 <TextInput
                   value={walletProvider}
                   onChangeText={setWalletProvider}
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    {
+                      borderColor: hexToRgba(text, 0.1),
+                      backgroundColor: card,
+                    },
+                  ]}
                   placeholder="Contoh: GoPay"
-                  placeholderTextColor="#687076"
+                  placeholderTextColor={icon}
                   onFocus={() => setShowWalletSuggestions(true)}
                 />
                 {showWalletSuggestions ? (
@@ -328,14 +411,28 @@ export default function PaymentMethodsScreen() {
                           key={wallet}
                           style={[
                             styles.suggestionChip,
-                            active && styles.suggestionChipActive,
+                            {
+                              borderColor: hexToRgba(text, 0.1),
+                              backgroundColor: card,
+                            },
+                            active && [
+                              styles.suggestionChipActive,
+                              {
+                                backgroundColor: hexToRgba(tint, 0.1),
+                                borderColor: tint,
+                              },
+                            ],
                           ]}
                           onPress={() => setWalletProvider(wallet)}
                         >
                           <Text
                             style={[
                               styles.suggestionText,
-                              active && styles.suggestionTextActive,
+                              { color: textSecondary },
+                              active && [
+                                styles.suggestionTextActive,
+                                { color: primaryDark },
+                              ],
                             ]}
                           >
                             {wallet}
@@ -348,44 +445,66 @@ export default function PaymentMethodsScreen() {
               </View>
 
               <View style={styles.field}>
-                <Text style={styles.label}>Nomor telepon</Text>
+                <Text style={[styles.label, { color: textSecondary }]}>
+                  Nomor telepon
+                </Text>
                 <TextInput
                   value={phoneNumber}
                   onChangeText={(value) =>
                     setPhoneNumber(sanitizeNumber(value))
                   }
-                  style={styles.input}
+                  style={[
+                    styles.input,
+                    {
+                      borderColor: hexToRgba(text, 0.1),
+                      backgroundColor: card,
+                    },
+                  ]}
                   placeholder="Contoh: 081234567890"
-                  placeholderTextColor="#687076"
+                  placeholderTextColor={icon}
                   keyboardType="phone-pad"
                 />
               </View>
             </>
           )}
 
-          <Pressable style={styles.saveButton} onPress={handleAdd}>
-            <Text style={styles.saveButtonText}>Simpan</Text>
+          <Pressable
+            style={[styles.saveButton, { backgroundColor: tint }]}
+            onPress={handleAdd}
+          >
+            <Text style={[styles.saveButtonText, { color: card }]}>Simpan</Text>
           </Pressable>
         </View>
 
-        <View style={styles.card}>
+        <View style={[styles.card, { backgroundColor: card }]}>
           <View style={styles.listHeaderRow}>
-            <Text style={styles.sectionTitle}>Metode tersimpan</Text>
-            <Text style={styles.sectionBadge}>{methodCountLabel} dipilih</Text>
+            <Text style={[styles.sectionTitle, { color: text }]}>
+              Metode tersimpan
+            </Text>
+            <Text style={[styles.sectionBadge, { color: tint }]}>
+              {methodCountLabel} dipilih
+            </Text>
           </View>
-          <Text style={styles.sectionSubtitle}>
-            Tap kartu untuk pilih . Metode terpilih akan tampil di Ringkasan.
+          <Text style={[styles.sectionSubtitle, { color: textSecondary }]}>
+            Tap kartu untuk pilih. Metode terpilih akan tampil di Ringkasan.
           </Text>
 
           {sortedMethods.length === 0 ? (
-            <View style={styles.emptyState}>
+            <View
+              style={[
+                styles.emptyState,
+                { backgroundColor: hexToRgba(text, 0.02) },
+              ]}
+            >
               <Image
                 source={require("@/assets/images/splitbill-empty-state.png")}
                 style={styles.emptyImage}
                 resizeMode="contain"
               />
-              <Text style={styles.emptyTitle}>Belum ada metode pembayaran</Text>
-              <Text style={styles.emptyText}>
+              <Text style={[styles.emptyTitle, { color: text }]}>
+                Belum ada metode pembayaran
+              </Text>
+              <Text style={[styles.emptyText, { color: textSecondary }]}>
                 Tambah lalu pilih yang kamu pakai untuk split bill.
               </Text>
             </View>
@@ -399,7 +518,17 @@ export default function PaymentMethodsScreen() {
                     key={method.id}
                     style={[
                       styles.methodCard,
-                      selected && styles.methodCardSelected,
+                      {
+                        borderColor: hexToRgba(text, 0.1),
+                        backgroundColor: card,
+                      },
+                      selected && [
+                        styles.methodCardSelected,
+                        {
+                          borderColor: tint,
+                          backgroundColor: hexToRgba(tint, 0.1),
+                        },
+                      ],
                     ]}
                     onPress={() => handleSelect(method.id)}
                   >
@@ -408,24 +537,34 @@ export default function PaymentMethodsScreen() {
                         style={[
                           styles.methodIcon,
                           isBank
-                            ? styles.methodIconBank
-                            : styles.methodIconWallet,
+                            ? [
+                                styles.methodIconBank,
+                                { backgroundColor: hexToRgba(tint, 0.12) },
+                              ]
+                            : [
+                                styles.methodIconWallet,
+                                { backgroundColor: hexToRgba(tint, 0.12) },
+                              ],
                         ]}
                       >
                         <MaterialCommunityIcons
                           name={isBank ? "bank" : "cellphone"}
                           size={18}
-                          color={isBank ? "#1d4ed8" : "#7c3aed"}
+                          color={isBank ? primaryDark : tint}
                         />
                       </View>
                       <View style={styles.methodContent}>
-                        <Text style={styles.methodTitle}>
+                        <Text style={[styles.methodTitle, { color: text }]}>
                           {method.provider}
                         </Text>
-                        <Text style={styles.methodOwner}>
+                        <Text
+                          style={[styles.methodOwner, { color: textSecondary }]}
+                        >
                           {method.ownerName}
                         </Text>
-                        <Text style={styles.methodMeta}>
+                        <Text
+                          style={[styles.methodMeta, { color: textSecondary }]}
+                        >
                           {isBank
                             ? `Rek: ${method.accountNumber}`
                             : `No HP: ${method.phoneNumber}`}
@@ -435,7 +574,7 @@ export default function PaymentMethodsScreen() {
                         <MaterialIcons
                           name="check-circle"
                           size={22}
-                          color="#22c55e"
+                          color={success}
                         />
                       ) : null}
                     </View>
@@ -443,8 +582,10 @@ export default function PaymentMethodsScreen() {
                       style={styles.removeButton}
                       onPress={(event) => handleRemove(event, method.id)}
                     >
-                      <MaterialIcons name="delete" size={18} color="#ef4444" />
-                      <Text style={styles.removeButtonText}>Hapus</Text>
+                      <MaterialIcons name="delete" size={18} color={error} />
+                      <Text style={[styles.removeButtonText, { color: error }]}>
+                        Hapus
+                      </Text>
                     </Pressable>
                   </Pressable>
                 );
@@ -453,8 +594,17 @@ export default function PaymentMethodsScreen() {
           )}
         </View>
 
-        <Pressable style={styles.backButton} onPress={() => router.back()}>
-          <Text style={styles.backButtonText}>Kembali</Text>
+        <Pressable
+          style={[
+            styles.backButton,
+            {
+              borderColor: hexToRgba(tint, 0.2),
+              backgroundColor: hexToRgba(tint, 0.1),
+            },
+          ]}
+          onPress={() => router.back()}
+        >
+          <Text style={[styles.backButtonText, { color: tint }]}>Kembali</Text>
         </Pressable>
       </ScrollView>
     </SafeAreaView>
@@ -464,15 +614,12 @@ export default function PaymentMethodsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#f6fafb",
   },
   container: {
     padding: 8,
     gap: 16,
-    // paddingBottom: 32,
   },
   hero: {
-    backgroundColor: "rgba(224, 242, 254, 1.00)",
     borderRadius: 20,
     padding: 20,
     flexDirection: "row",
@@ -483,7 +630,6 @@ const styles = StyleSheet.create({
     width: 52,
     height: 52,
     borderRadius: 26,
-    backgroundColor: "rgba(219, 233, 254, 1.00)",
     alignItems: "center",
     justifyContent: "center",
   },
@@ -492,18 +638,15 @@ const styles = StyleSheet.create({
     gap: 6,
   },
   heroTitle: {
-    color: "#0f172a",
     fontSize: 16,
     fontFamily: Poppins.semibold,
   },
   heroSubtitle: {
-    color: "#0f172a",
     opacity: 0.6,
     fontSize: 14,
     fontFamily: Poppins.regular,
   },
   card: {
-    backgroundColor: "#ffffff",
     borderRadius: 14,
     padding: 18,
     gap: 16,
@@ -511,7 +654,6 @@ const styles = StyleSheet.create({
   methodSwitch: {
     flexDirection: "row",
     gap: 8,
-    backgroundColor: "#f1f5f9",
     padding: 4,
     borderRadius: 12,
   },
@@ -525,7 +667,6 @@ const styles = StyleSheet.create({
     borderRadius: 11,
   },
   methodChipActive: {
-    backgroundColor: "#ffffff",
     ...Platform.select({
       web: {
         boxShadow: "0 2px 8px rgba(15,23,42,0.08)",
@@ -541,27 +682,21 @@ const styles = StyleSheet.create({
   },
   methodChipText: {
     fontFamily: Poppins.medium,
-    color: "#64748b",
   },
-  methodChipTextActive: {
-    color: "#0f172a",
-  },
+  methodChipTextActive: {},
   field: {
     gap: 8,
   },
   label: {
     fontSize: 13,
-    color: "#475569",
     fontFamily: Poppins.medium,
   },
   input: {
     borderWidth: 1,
-    borderColor: "#e2e8f0",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
-    backgroundColor: "#fff",
   },
   suggestionRow: {
     flexDirection: "row",
@@ -573,29 +708,19 @@ const styles = StyleSheet.create({
     paddingVertical: 6,
     borderRadius: 999,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
-    backgroundColor: "#ffffff",
   },
-  suggestionChipActive: {
-    backgroundColor: "#ede9fe",
-    borderColor: "#7056ec",
-  },
+  suggestionChipActive: {},
   suggestionText: {
     fontFamily: Poppins.medium,
-    color: "#475569",
     fontSize: 12,
   },
-  suggestionTextActive: {
-    color: "#4c1d95",
-  },
+  suggestionTextActive: {},
   saveButton: {
-    backgroundColor: "#7056ec",
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",
   },
   saveButtonText: {
-    color: "#ffffff",
     fontFamily: Poppins.semibold,
   },
   listHeaderRow: {
@@ -605,16 +730,13 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 16,
-    color: "#0f172a",
     fontFamily: Poppins.semibold,
   },
   sectionBadge: {
     fontFamily: Poppins.medium,
-    color: "#7056ec",
     fontSize: 13,
   },
   sectionSubtitle: {
-    color: "#64748b",
     fontSize: 13,
     fontFamily: Poppins.regular,
   },
@@ -623,7 +745,6 @@ const styles = StyleSheet.create({
     padding: 20,
     alignItems: "center",
     gap: 10,
-    backgroundColor: "#f8fafc",
   },
   emptyImage: {
     width: 100,
@@ -631,12 +752,10 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontFamily: Poppins.semibold,
-    color: "#0f172a",
     textAlign: "center",
   },
   emptyText: {
     fontFamily: Poppins.regular,
-    color: "#64748b",
     fontSize: 13,
     textAlign: "center",
   },
@@ -646,14 +765,9 @@ const styles = StyleSheet.create({
   methodCard: {
     borderRadius: 14,
     borderWidth: 1,
-    borderColor: "#e2e8f0",
     padding: 16,
-    backgroundColor: "#ffffff",
   },
-  methodCardSelected: {
-    borderColor: "#7056ec",
-    backgroundColor: "#ede9fe",
-  },
+  methodCardSelected: {},
   methodCardHeader: {
     flexDirection: "row",
     alignItems: "center",
@@ -666,29 +780,22 @@ const styles = StyleSheet.create({
     alignItems: "center",
     justifyContent: "center",
   },
-  methodIconBank: {
-    backgroundColor: "rgba(59,130,246,0.12)",
-  },
-  methodIconWallet: {
-    backgroundColor: "rgba(124,58,237,0.12)",
-  },
+  methodIconBank: {},
+  methodIconWallet: {},
   methodContent: {
     flex: 1,
     gap: 2,
   },
   methodTitle: {
     fontFamily: Poppins.semibold,
-    color: "#0f172a",
     fontSize: 15,
   },
   methodOwner: {
     fontFamily: Poppins.medium,
-    color: "#475569",
     fontSize: 13,
   },
   methodMeta: {
     fontFamily: Poppins.regular,
-    color: "#64748b",
     fontSize: 12,
   },
   removeButton: {
@@ -699,16 +806,13 @@ const styles = StyleSheet.create({
   },
   removeButtonText: {
     fontFamily: Poppins.medium,
-    color: "#ef4444",
     fontSize: 13,
   },
   errorText: {
-    color: "#ef4444",
     fontFamily: Poppins.medium,
   },
   backButton: {
     borderWidth: 1,
-    borderColor: "#dbeafe",
     flexDirection: "row",
     alignItems: "center",
     gap: 8,
@@ -717,11 +821,9 @@ const styles = StyleSheet.create({
     paddingVertical: 14,
     flex: 1,
     justifyContent: "center",
-    backgroundColor: "#eff6ff",
   },
   backButtonText: {
     fontFamily: Poppins.semibold,
-    color: "#2563eb",
     fontSize: 16,
   },
 });

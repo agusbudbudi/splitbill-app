@@ -57,7 +57,8 @@ export const EditExpenseBottomSheet: React.FC<EditExpenseBottomSheetProps> = ({
     const amount = parseCurrency(amountInput);
     return (
       description.trim().length > 0 &&
-      amount > 0 &&
+      !Number.isNaN(amount) &&
+      amount !== 0 &&
       !!paidBy &&
       selectedParticipants.length > 0
     );
@@ -136,12 +137,12 @@ export const EditExpenseBottomSheet: React.FC<EditExpenseBottomSheetProps> = ({
               <TextInput
                 value={amountInput}
                 onChangeText={(text) => {
-                  const numericValue = text.replace(/[^0-9]/g, "");
+                  const numericValue = text.replace(/[^0-9-]/g, "");
                   setAmountInput(numericValue);
                 }}
                 placeholder="0"
                 placeholderTextColor="#687076"
-                keyboardType="numeric"
+                keyboardType="numbers-and-punctuation"
                 style={styles.input}
               />
             </View>

@@ -20,7 +20,8 @@ import { Poppins } from "@/constants/fonts";
 import { useAuth } from "@/context/auth-context";
 import { useSnackbar } from "@/context/snackbar-context";
 import { useSplitBill } from "@/context/split-bill-context";
-import { getAvatarColor } from "@/lib/utils/colors";
+import { useThemeColor } from "@/hooks/use-theme-color";
+import { getAvatarColor, hexToRgba } from "@/lib/utils/colors";
 
 export default function ParticipantsScreen() {
   const router = useRouter();
@@ -31,6 +32,15 @@ export default function ParticipantsScreen() {
   const [isNameFocused, setNameFocused] = useState(false);
   const [isSubmitting, setSubmitting] = useState(false);
   const [removingId, setRemovingId] = useState<string | null>(null);
+
+  const background = useThemeColor({}, "background");
+  const card = useThemeColor({}, "card");
+  const text = useThemeColor({}, "text");
+  const textSecondary = useThemeColor({}, "textSecondary");
+  const tint = useThemeColor({}, "tint");
+  const error = useThemeColor({}, "error");
+  const icon = useThemeColor({}, "icon");
+  const primaryDark = useThemeColor({}, "primaryDark");
 
   const canContinue = useMemo(
     () => participants.length >= 2,
@@ -147,29 +157,45 @@ export default function ParticipantsScreen() {
   };
 
   return (
-    <SafeAreaView edges={["left", "right", "bottom"]} style={styles.safeArea}>
+    <SafeAreaView
+      edges={["left", "right", "bottom"]}
+      style={[styles.safeArea, { backgroundColor: background }]}
+    >
       <ScrollView contentContainerStyle={styles.container}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={styles.content}
         >
-          <View style={styles.hero}>
-            <View style={styles.heroIcon}>
-              <FontAwesome5 name="users" size={24} color="#2762EA" />
+          <View
+            style={[styles.hero, { backgroundColor: hexToRgba(tint, 0.05) }]}
+          >
+            <View
+              style={[
+                styles.heroIcon,
+                { backgroundColor: hexToRgba(tint, 0.2) },
+              ]}
+            >
+              <FontAwesome5 name="users" size={24} color={tint} />
             </View>
             <View style={styles.heroText}>
-              <Text style={styles.heroTitle}>Bentuk timmu dulu ✨</Text>
-              <Text style={styles.heroSubtitle}>
+              <Text style={[styles.heroTitle, { color: text }]}>
+                Bentuk timmu dulu ✨
+              </Text>
+              <Text
+                style={[styles.heroSubtitle, { color: text, opacity: 0.6 }]}
+              >
                 Tambah teman yang mau diajak split bill biar perhitungannya
                 rapi.
               </Text>
             </View>
           </View>
 
-          <View style={styles.card}>
-            <Text style={styles.sectionTitle}>Tambah Teman</Text>
+          <View style={[styles.card, { backgroundColor: card }]}>
+            <Text style={[styles.sectionTitle, { color: text }]}>
+              Tambah Teman
+            </Text>
             <View style={styles.sectionSubtitleRow}>
-              <Text style={styles.sectionSubtitle}>
+              <Text style={[styles.sectionSubtitle, { color: textSecondary }]}>
                 Bisa langsung ketik beberapa nama dipisah koma, contoh: Adit,
                 Beni, Clara
               </Text>
@@ -179,11 +205,12 @@ export default function ParticipantsScreen() {
                 value={name}
                 onChangeText={setName}
                 placeholder="Nama teman"
-                placeholderTextColor="#687076"
+                placeholderTextColor={icon}
                 style={[
                   styles.input,
                   styles.flex1,
-                  isNameFocused && styles.inputFocused,
+                  { borderColor: hexToRgba(text, 0.1) },
+                  isNameFocused && [styles.inputFocused, { borderColor: tint }],
                 ]}
                 returnKeyType="done"
                 onSubmitEditing={() => {
@@ -195,6 +222,7 @@ export default function ParticipantsScreen() {
               <Pressable
                 style={[
                   styles.addButton,
+                  { backgroundColor: tint },
                   (isSubmitting || !name.trim()) && styles.addButtonDisabled,
                 ]}
                 onPress={() => {
@@ -203,48 +231,77 @@ export default function ParticipantsScreen() {
                 disabled={isSubmitting || !name.trim()}
               >
                 {isSubmitting ? (
-                  <ActivityIndicator color="#ffffff" />
+                  <ActivityIndicator color={card} />
                 ) : (
-                  <Text style={styles.addButtonText}>Tambah</Text>
+                  <Text style={[styles.addButtonText, { color: card }]}>
+                    Tambah
+                  </Text>
                 )}
               </Pressable>
             </View>
           </View>
 
-          <View style={styles.card}>
+          <View style={[styles.card, { backgroundColor: card }]}>
             <View style={styles.sectionHeader}>
-              <Text style={styles.sectionTitle}>Daftar Teman</Text>
-              <View style={styles.countBadge}>
-                <Text style={styles.countBadgeText}>{participants.length}</Text>
+              <Text style={[styles.sectionTitle, { color: text }]}>
+                Daftar Teman
+              </Text>
+              <View
+                style={[
+                  styles.countBadge,
+                  { backgroundColor: hexToRgba(tint, 0.1) },
+                ]}
+              >
+                <Text style={[styles.countBadgeText, { color: primaryDark }]}>
+                  {participants.length}
+                </Text>
               </View>
             </View>
             {participants.length === 0 ? (
-              <View style={styles.emptyState}>
+              <View
+                style={[
+                  styles.emptyState,
+                  { backgroundColor: hexToRgba(text, 0.02) },
+                ]}
+              >
                 <Image
                   source={require("@/assets/images/splitbill-empty-state.png")}
                   style={styles.emptyImage}
                   resizeMode="contain"
                 />
-                <Text style={styles.emptyTitle}>Belum ada anggota</Text>
-                <Text style={styles.emptyText}>
+                <Text style={[styles.emptyTitle, { color: text }]}>
+                  Belum ada anggota
+                </Text>
+                <Text style={[styles.emptyText, { color: textSecondary }]}>
                   Minimal tambah dua orang dulu biar pembagian bisa dihitung.
                 </Text>
               </View>
             ) : (
               <View style={styles.listContent}>
                 {participants.map((item) => (
-                  <View key={item.id} style={styles.personRow}>
+                  <View
+                    key={item.id}
+                    style={[
+                      styles.personRow,
+                      { backgroundColor: hexToRgba(text, 0.02) },
+                    ]}
+                  >
                     <View
                       style={[
                         styles.avatar,
-                        { backgroundColor: getAvatarColor(item.id) },
+                        {
+                          backgroundColor: getAvatarColor(item.id),
+                          borderColor: card,
+                        },
                       ]}
                     >
-                      <Text style={styles.avatarText}>
+                      <Text style={[styles.avatarText, { color: card }]}>
                         {item.name.charAt(0).toUpperCase()}
                       </Text>
                     </View>
-                    <Text style={styles.personName}>{item.name}</Text>
+                    <Text style={[styles.personName, { color: text }]}>
+                      {item.name}
+                    </Text>
                     <Pressable
                       onPress={() => {
                         void handleRemove(item.id);
@@ -254,6 +311,7 @@ export default function ParticipantsScreen() {
                       <Text
                         style={[
                           styles.removeText,
+                          { color: error },
                           (removingId === item.id || isSubmitting) &&
                             styles.removeTextDisabled,
                         ]}
@@ -269,13 +327,24 @@ export default function ParticipantsScreen() {
         </KeyboardAvoidingView>
       </ScrollView>
 
-      <View style={styles.footer}>
+      <View
+        style={[
+          styles.footer,
+          { backgroundColor: background, borderTopColor: hexToRgba(text, 0.1) },
+        ]}
+      >
         <Pressable
-          style={[styles.primaryButton, !canContinue && styles.disabledButton]}
+          style={[
+            styles.primaryButton,
+            { backgroundColor: tint },
+            !canContinue && styles.disabledButton,
+          ]}
           disabled={!canContinue}
           onPress={() => router.push("/expenses")}
         >
-          <Text style={styles.primaryText}>Lanjut Catat Pengeluaran</Text>
+          <Text style={[styles.primaryText, { color: card }]}>
+            Lanjut Catat Pengeluaran
+          </Text>
         </Pressable>
       </View>
     </SafeAreaView>
@@ -285,7 +354,6 @@ export default function ParticipantsScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#f6fafb",
   },
   container: {
     padding: 8,
@@ -295,41 +363,35 @@ const styles = StyleSheet.create({
     gap: 16,
   },
   hero: {
-    backgroundColor: "rgba(224, 242, 254, 1.00)",
     borderRadius: 20,
     padding: 20,
     flexDirection: "row",
-    gap: 12,
+    gap: 14,
     alignItems: "center",
   },
   heroIcon: {
-    backgroundColor: "#DBE9FE",
-    width: 48,
-    height: 48,
-    borderRadius: 24,
+    width: 52,
+    height: 52,
+    borderRadius: 26,
     alignItems: "center",
     justifyContent: "center",
   },
   heroText: {
     flex: 1,
-    gap: 2,
+    gap: 6,
   },
   heroTitle: {
-    color: "#0f172a",
     fontSize: 16,
-    fontWeight: "800",
     fontFamily: Poppins.semibold,
   },
   heroSubtitle: {
-    color: "#0f172a",
     opacity: 0.6,
     fontSize: 14,
     fontFamily: Poppins.regular,
   },
   card: {
-    backgroundColor: "#ffffff",
     borderRadius: 12,
-    padding: 16,
+    padding: 18,
     gap: 12,
   },
   sectionHeader: {
@@ -339,11 +401,9 @@ const styles = StyleSheet.create({
   },
   sectionTitle: {
     fontSize: 18,
-    color: "#0f172a",
     fontFamily: Poppins.semibold,
   },
   countBadge: {
-    backgroundColor: "#ede9fe",
     paddingHorizontal: 8,
     paddingVertical: 2,
     borderRadius: 999,
@@ -351,13 +411,11 @@ const styles = StyleSheet.create({
     justifyContent: "center",
   },
   countBadgeText: {
-    color: "#4c1d95",
     fontSize: 12,
     fontFamily: Poppins.semibold,
   },
   sectionSubtitle: {
     fontSize: 13,
-    color: "#64748b",
     fontFamily: Poppins.regular,
   },
   sectionSubtitleRow: {
@@ -370,15 +428,12 @@ const styles = StyleSheet.create({
   },
   input: {
     borderWidth: 1,
-    borderColor: "#e2e8f0",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
   },
-  inputFocused: {
-    borderColor: "#2563eb",
-  },
+  inputFocused: {},
   inlineForm: {
     flexDirection: "row",
     gap: 12,
@@ -387,7 +442,6 @@ const styles = StyleSheet.create({
     flex: 1,
   },
   addButton: {
-    backgroundColor: "#2563eb",
     borderRadius: 12,
     paddingHorizontal: 18,
     justifyContent: "center",
@@ -396,7 +450,6 @@ const styles = StyleSheet.create({
     opacity: 0.6,
   },
   addButtonText: {
-    color: "#ffffff",
     fontSize: 15,
     fontFamily: Poppins.semibold,
   },
@@ -409,41 +462,33 @@ const styles = StyleSheet.create({
     gap: 12,
     padding: 14,
     borderRadius: 12,
-    backgroundColor: "#f8fafc",
   },
   avatar: {
     width: 36,
     height: 36,
     borderRadius: 21,
-    backgroundColor: "#1d4ed8",
     alignItems: "center",
     justifyContent: "center",
-    borderColor: "#ffffff",
     borderWidth: 2,
   },
   avatarText: {
-    color: "#ffffff",
     fontFamily: Poppins.semibold,
     fontSize: 14,
   },
   personName: {
     flex: 1,
     fontSize: 16,
-    color: "#0f172a",
     fontFamily: Poppins.regular,
   },
   removeText: {
-    color: "#ef4444",
     fontFamily: Poppins.semibold,
   },
   removeTextDisabled: {
-    color: "#ef4444",
     opacity: 0.5,
   },
   emptyState: {
     padding: 16,
     borderRadius: 12,
-    backgroundColor: "#f8fafc",
     gap: 6,
     alignItems: "center",
   },
@@ -453,29 +498,23 @@ const styles = StyleSheet.create({
   },
   emptyTitle: {
     fontSize: 16,
-    color: "#0f172a",
     fontFamily: Poppins.semibold,
   },
   emptyText: {
     fontSize: 12,
-    color: "#64748b",
     textAlign: "center",
     fontFamily: Poppins.regular,
   },
   footer: {
     padding: 16,
-    backgroundColor: "#f6fafb",
     borderTopWidth: 1,
-    borderTopColor: "#e2e8f0",
   },
   primaryButton: {
-    backgroundColor: "#7056ec",
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: "center",
   },
   primaryText: {
-    color: "#ffffff",
     fontSize: 16,
     fontFamily: Poppins.semibold,
   },

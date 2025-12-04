@@ -3,8 +3,8 @@ import { apiRequest } from "@/lib/auth/client";
 import type {
   CreateSplitBillPayload,
   Participant,
-  SplitBillRecord,
   PaymentMethodSnapshot,
+  SplitBillRecord,
 } from "./types";
 
 type ParticipantResponse = {
@@ -117,4 +117,34 @@ export async function fetchSplitBillRecord(
   }>(`/api/split-bills/${recordId}`);
 
   return mapSplitBillRecord(result.record);
+}
+
+type BannerResponse = {
+  id?: string;
+  _id?: string;
+  image: string;
+  route?: string;
+};
+
+export type Banner = {
+  id: string;
+  image: string;
+  route?: string;
+};
+
+function mapBanner(b: BannerResponse): Banner {
+  return {
+    id: b.id ?? b._id ?? "",
+    image: b.image,
+    route: b.route,
+  };
+}
+
+export async function fetchBanners(): Promise<Banner[]> {
+  const result = await apiRequest<{
+    success: boolean;
+    data: { banners: BannerResponse[] };
+  }>("/api/banners", { skipAuth: true });
+
+  return (result.data?.banners ?? []).map(mapBanner);
 }

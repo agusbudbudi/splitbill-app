@@ -13,10 +13,20 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "@/context/auth-context";
+import { useThemeColor } from "@/hooks/use-theme-color";
+import { hexToRgba } from "@/lib/utils/colors";
 
 export default function LoginScreen() {
   const router = useRouter();
   const { login, isSubmitting } = useAuth();
+
+  const background = useThemeColor({}, 'background');
+  const card = useThemeColor({}, 'card');
+  const text = useThemeColor({}, 'text');
+  const textSecondary = useThemeColor({}, 'textSecondary');
+  const tint = useThemeColor({}, 'tint');
+  const errorColor = useThemeColor({}, 'error');
+  const icon = useThemeColor({}, 'icon');
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
@@ -40,77 +50,77 @@ export default function LoginScreen() {
   };
 
   return (
-    <SafeAreaView style={styles.safeArea}>
+    <SafeAreaView style={[styles.safeArea, { backgroundColor: background }]}>
       <ScrollView contentContainerStyle={styles.container}>
         <KeyboardAvoidingView
           behavior={Platform.OS === "ios" ? "padding" : undefined}
           style={styles.cardWrapper}
         >
           <View style={styles.hero}>
-            <Text style={styles.heroTitle}>Split Bill App</Text>
+            <Text style={[styles.heroTitle, { color: text }]}>Split Bill App</Text>
 
-            <Text style={styles.heroSubtitle}>
+            <Text style={[styles.heroSubtitle, { color: textSecondary }]}>
               ⚡ Scan bill pakai AI, bikin split bill easy peasy!
             </Text>
           </View>
 
-          <View style={styles.card}>
+          <View style={[styles.card, { backgroundColor: card }]}>
             <View style={styles.header}>
-              <Text style={styles.title}>Masuk dulu ya 👋🏻</Text>
-              <Text style={styles.subtitle}>
+              <Text style={[styles.title, { color: text }]}>Masuk dulu ya 👋🏻</Text>
+              <Text style={[styles.subtitle, { color: textSecondary }]}>
                 Hi Gengs! masuk untuk lanjut kelola split bill kamu.
               </Text>
             </View>
 
             {error ? (
-              <View style={styles.errorBox}>
-                <Text style={styles.errorText}>{error}</Text>
+              <View style={[styles.errorBox, { backgroundColor: hexToRgba(errorColor, 0.1) }]}>
+                <Text style={[styles.errorText, { color: errorColor }]}>{error}</Text>
               </View>
             ) : null}
 
             <View style={styles.field}>
-              <Text style={styles.label}>Email</Text>
+              <Text style={[styles.label, { color: text }]}>Email</Text>
               <TextInput
                 value={email}
                 onChangeText={setEmail}
                 keyboardType="email-address"
                 autoCapitalize="none"
                 placeholder="nama@email.com"
-                placeholderTextColor="#687076"
-                style={[styles.input, isEmailFocused && styles.inputFocused]}
+                placeholderTextColor={icon}
+                style={[styles.input, { borderColor: hexToRgba(text, 0.1) }, isEmailFocused && [styles.inputFocused, { borderColor: tint }]]}
                 onFocus={() => setEmailFocused(true)}
                 onBlur={() => setEmailFocused(false)}
               />
             </View>
 
             <View style={styles.field}>
-              <Text style={styles.label}>Password</Text>
+              <Text style={[styles.label, { color: text }]}>Password</Text>
               <TextInput
                 value={password}
                 onChangeText={setPassword}
                 secureTextEntry
                 placeholder="******"
-                placeholderTextColor="#687076"
-                style={[styles.input, isPasswordFocused && styles.inputFocused]}
+                placeholderTextColor={icon}
+                style={[styles.input, { borderColor: hexToRgba(text, 0.1) }, isPasswordFocused && [styles.inputFocused, { borderColor: tint }]]}
                 onFocus={() => setPasswordFocused(true)}
                 onBlur={() => setPasswordFocused(false)}
               />
             </View>
 
             <Pressable
-              style={[styles.primaryButton, isSubmitting && styles.disabled]}
+              style={[styles.primaryButton, { backgroundColor: tint }, isSubmitting && styles.disabled]}
               onPress={handleSubmit}
               disabled={isSubmitting}
             >
-              <Text style={styles.primaryText}>
+              <Text style={[styles.primaryText, { color: card }]}>
                 {isSubmitting ? "Memproses..." : "Masuk"}
               </Text>
             </Pressable>
 
             <View style={styles.switchRow}>
-              <Text style={styles.switchText}>Belum punya akun?</Text>
+              <Text style={[styles.switchText, { color: textSecondary }]}>Belum punya akun?</Text>
               <Pressable onPress={() => router.push("/(auth)/register")}>
-                <Text style={styles.switchLink}>Daftar sekarang</Text>
+                <Text style={[styles.switchLink, { color: tint }]}>Daftar sekarang</Text>
               </Pressable>
             </View>
           </View>
@@ -123,7 +133,6 @@ export default function LoginScreen() {
 const styles = StyleSheet.create({
   safeArea: {
     flex: 1,
-    backgroundColor: "#f6fafb",
   },
   container: {
     padding: 16,
@@ -141,15 +150,12 @@ const styles = StyleSheet.create({
   heroTitle: {
     fontSize: 28,
     fontWeight: "700",
-    color: "#0f172a",
   },
   heroSubtitle: {
     fontSize: 15,
-    color: "#475569",
     textAlign: "center",
   },
   card: {
-    backgroundColor: "#ffffff",
     borderRadius: 12,
     padding: 16,
     gap: 16,
@@ -160,11 +166,9 @@ const styles = StyleSheet.create({
   title: {
     fontSize: 22,
     fontWeight: "700",
-    color: "#0f172a",
   },
   subtitle: {
     fontSize: 14,
-    color: "#475569",
   },
   field: {
     gap: 8,
@@ -172,27 +176,21 @@ const styles = StyleSheet.create({
   label: {
     fontSize: 14,
     fontWeight: "600",
-    color: "#0f172a",
   },
   input: {
     borderWidth: 1,
-    borderColor: "#e2e8f0",
     borderRadius: 12,
     paddingHorizontal: 16,
     paddingVertical: 14,
     fontSize: 16,
   },
-  inputFocused: {
-    borderColor: "#2563eb",
-  },
+  inputFocused: {},
   primaryButton: {
-    backgroundColor: "#2563eb",
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",
   },
   primaryText: {
-    color: "#ffffff",
     fontSize: 16,
     fontWeight: "600",
   },
@@ -204,20 +202,15 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 6,
   },
-  switchText: {
-    color: "#475569",
-  },
+  switchText: {},
   switchLink: {
-    color: "#2563eb",
     fontWeight: "600",
   },
   errorBox: {
-    backgroundColor: "#fee2e2",
     borderRadius: 12,
     padding: 12,
   },
   errorText: {
-    color: "#b91c1c",
     fontSize: 14,
     textAlign: "center",
   },

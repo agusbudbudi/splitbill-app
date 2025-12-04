@@ -1,16 +1,32 @@
-const PALETTE = [
-  '#f87171', '#fb923c', '#fbbf24', '#a3e635', '#4ade80', '#34d399',
-  '#2dd4bf', '#22d3ee', '#38bdf8', '#60a5fa', '#818cf8', '#a78bfa',
-  '#c084fc', '#e879f9', '#f472b6', '#fb7185'
+const avatarColors = [
+  '#ef4444', // red
+  '#f97316', // orange
+  '#eab308', // yellow
+  '#84cc16', // lime
+  '#22c55e', // green
+  '#14b8a6', // teal
+  '#06b6d4', // cyan
+  '#3b82f6', // blue
+  '#8b5cf6', // violet
+  '#d946ef', // fuchsia
+  '#ec4899', // pink
 ];
 
 export function getAvatarColor(id: string): string {
-  // A simple hashing function to get a deterministic index from the id
+  // Simple hash function to get a number from a string
   let hash = 0;
   for (let i = 0; i < id.length; i++) {
     hash = id.charCodeAt(i) + ((hash << 5) - hash);
-    hash = hash & hash; // Convert to 32bit integer
   }
-  const index = Math.abs(hash) % PALETTE.length;
-  return PALETTE[index];
+  // Get an index from the hash
+  const index = Math.abs(hash % avatarColors.length);
+  return avatarColors[index];
+}
+
+export function hexToRgba(hex: string, alpha: number): string {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+
+  return `rgba(${r}, ${g}, ${b}, ${alpha})`;
 }

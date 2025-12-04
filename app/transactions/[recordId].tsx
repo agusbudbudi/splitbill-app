@@ -45,7 +45,7 @@ export default function SplitBillDetailScreen() {
   useLayoutEffect(() => {
     navigation.setOptions({
       title: "Detail Split Bill",
-      headerStyle: { backgroundColor: "#1E4ED8", borderBottomWidth: 0 },
+      headerStyle: { backgroundColor: "#3462F2", borderBottomWidth: 0 },
       headerTintColor: "#ffffff",
       headerTitleStyle: { color: "#ffffff" },
       headerBackTitleStyle: { color: "#ffffff" },
@@ -526,6 +526,23 @@ _Dibuat dengan Split Bill App_`;
                                       <Text style={styles.breakdownName}>
                                         {owedItem.description}
                                       </Text>
+                                      {owedItem.amount < 0 ? (
+                                        <View
+                                          style={[
+                                            styles.breakdownBadge,
+                                            { backgroundColor: "#dcfce7" },
+                                          ]}
+                                        >
+                                          <Text
+                                            style={[
+                                              styles.breakdownBadgeText,
+                                              { color: "#166534" },
+                                            ]}
+                                          >
+                                            Discount
+                                          </Text>
+                                        </View>
+                                      ) : null}
                                       {isAdditional ? (
                                         <View style={styles.breakdownBadge}>
                                           <Text
@@ -724,7 +741,7 @@ _Dibuat dengan Split Bill App_`;
                                   color={
                                     method.category === "bank_transfer"
                                       ? "#1d4ed8"
-                                      : "#7c3aed"
+                                      : "#3462F2"
                                   }
                                 />
                               </View>
@@ -900,7 +917,7 @@ const styles = StyleSheet.create({
     color: "#0f172a",
   },
   hero: {
-    backgroundColor: "#1E4ED8",
+    backgroundColor: "#3462F2",
     padding: 20,
     flexDirection: "row",
     alignItems: "flex-start",
@@ -1087,7 +1104,7 @@ const styles = StyleSheet.create({
   breakdownBadgeText: {
     fontSize: 10,
     fontWeight: "600",
-    color: "#7c3aed",
+    color: "#3462F2",
   },
   breakdownAmount: {
     fontWeight: "700",

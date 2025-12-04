@@ -7,19 +7,21 @@ import {
   useFonts,
 } from "@expo-google-fonts/poppins";
 import { DefaultTheme, ThemeProvider } from "@react-navigation/native";
-import { Stack } from "expo-router";
+import { Stack, usePathname } from "expo-router";
 import * as SplashScreen from "expo-splash-screen";
 import { StatusBar } from "expo-status-bar";
 import { useEffect } from "react";
 import type { TextInputProps, TextProps } from "react-native";
-import { Platform, Text, TextInput } from "react-native"; // Added Platform import
+import { Platform, Text, TextInput, View } from "react-native"; // Added Platform import
 import "react-native-reanimated";
 
+import { BottomTabBar } from "@/components/bottom-tab-bar";
 import { Snackbar as NativeSnackbar } from "@/components/ui/snackbar"; // Renamed for clarity
 import { Snackbar as WebSnackbar } from "@/components/ui/snackbar.web"; // Import web-specific Snackbar
 import { AuthProvider } from "@/context/auth-context";
 import { SnackbarProvider, useSnackbar } from "@/context/snackbar-context";
 import { SplitBillProvider } from "@/context/split-bill-context";
+import { SafeAreaProvider } from "react-native-safe-area-context";
 
 SplashScreen.preventAutoHideAsync().catch(() => {
   // ignore
@@ -41,6 +43,17 @@ function SnackbarRenderer() {
   return (
     <PlatformSpecificSnackbar snackbar={snackbar} onClose={hideSnackbar} />
   );
+}
+
+function ConditionalBottomTabBar() {
+  const pathname = usePathname();
+  const isAuthRoute = pathname.startsWith("/(auth)");
+
+  if (isAuthRoute) {
+    return null;
+  }
+
+  return <BottomTabBar />;
 }
 
 export default function RootLayout() {
@@ -92,62 +105,73 @@ export default function RootLayout() {
   }
 
   return (
-    <ThemeProvider value={DefaultTheme}>
+    <SafeAreaProvider>
       <AuthProvider>
         <SplitBillProvider>
-          <SnackbarProvider>
-            <Stack
-              screenOptions={{
-                headerShadowVisible: false,
-                headerBackTitle: "Back",
-                headerTitleStyle: {
-                  fontSize: 18,
-                  fontWeight: "700",
-                  color: "#0f172a",
-                },
-                contentStyle: {
-                  backgroundColor: "#f6fafb",
-                },
-              }}
-            >
-              <Stack.Screen name="(auth)" options={{ headerShown: false }} />
-              <Stack.Screen name="index" options={{ headerShown: false }} />
-              <Stack.Screen
-                name="participants"
-                options={{ title: "Kelola Teman" }}
-              />
-              <Stack.Screen
-                name="expenses"
-                options={{ title: "Catat Pengeluaran" }}
-              />
-              <Stack.Screen
-                name="additional-expenses"
-                options={{ title: "Additional Expense" }}
-              />
-              <Stack.Screen
-                name="payment-methods"
-                options={{ title: "Metode Pembayaran" }}
-              />
-              <Stack.Screen
-                name="transactions"
-                options={{ headerShown: false }}
-              />
-              <Stack.Screen
-                name="summary"
-                options={{ title: "Ringkasan Split Bill" }}
-              />
-              <Stack.Screen
-                name="scan"
-                options={{ title: "Scan Bill dengan AI" }}
-              />
-              <Stack.Screen name="profile" options={{ title: "Profil Kamu" }} />
-              <Stack.Screen name="review" options={{ title: "Beri Ulasan" }} />
-            </Stack>
-            <SnackbarRenderer />
-          </SnackbarProvider>
+          <ThemeProvider value={DefaultTheme}>
+            <SnackbarProvider>
+              <View style={{ flex: 1 }}>
+                <Stack
+                  screenOptions={{
+                    headerShadowVisible: false,
+                    headerBackTitle: "Back",
+                    headerTitleStyle: {
+                      fontSize: 18,
+                      fontWeight: "700",
+                      color: "#0f172a",
+                    },
+                    contentStyle: {
+                      backgroundColor: "#f6fafb",
+                    },
+                  }}
+                >
+                  <Stack.Screen name="(auth)" options={{ headerShown: false }} />
+                  <Stack.Screen name="index" options={{ headerShown: false }} />
+                  <Stack.Screen
+                    name="participants"
+                    options={{ title: "Kelola Teman" }}
+                  />
+                  <Stack.Screen
+                    name="expenses"
+                    options={{ title: "Catat Pengeluaran" }}
+                  />
+                  <Stack.Screen
+                    name="additional-expenses"
+                    options={{ title: "Additional Expense" }}
+                  />
+                  <Stack.Screen
+                    name="payment-methods"
+                    options={{ title: "Metode Pembayaran" }}
+                  />
+                  <Stack.Screen
+                    name="transactions"
+                    options={{ headerShown: false }}
+                  />
+                  <Stack.Screen
+                    name="summary"
+                    options={{ title: "Ringkasan Split Bill" }}
+                  />
+                  <Stack.Screen
+                    name="scan"
+                    options={{ title: "Scan Bill dengan AI" }}
+                  />
+                  <Stack.Screen
+                    name="profile"
+                    options={{ title: "Profil Kamu" }}
+                  />
+                  <Stack.Screen
+                    name="review"
+                    options={{ title: "Beri Ulasan" }}
+                  />
+                </Stack>
+                <ConditionalBottomTabBar />
+                <SnackbarRenderer />
+              </View>
+            </SnackbarProvider>
+          </ThemeProvider>
         </SplitBillProvider>
       </AuthProvider>
       <StatusBar style="dark" backgroundColor="#f6fafb" />
-    </ThemeProvider>
+    </SafeAreaProvider>
   );
 }

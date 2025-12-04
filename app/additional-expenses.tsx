@@ -15,6 +15,8 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { Poppins } from "@/constants/fonts";
 import { useSplitBill } from "@/context/split-bill-context";
 import { formatCurrency } from "@/lib/split-bill/format";
+import { useThemeColor } from "@/hooks/use-theme-color";
+import { hexToRgba } from "@/lib/utils/colors";
 
 export default function AdditionalExpensesScreen() {
   const router = useRouter();
@@ -36,7 +38,7 @@ export default function AdditionalExpensesScreen() {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const handleAmountChange = (value: string) => {
-    const sanitized = value.replace(/[^0-9]/g, "");
+    const sanitized = value.replace(/[^0-9-]/g, "");
     setAmountInput(sanitized);
   };
 
@@ -57,7 +59,6 @@ export default function AdditionalExpensesScreen() {
     return (
       description.trim().length > 0 &&
       !Number.isNaN(amount) &&
-      amount > 0 &&
       paidBy !== null &&
       selectedParticipants.length > 0
     );
@@ -80,8 +81,8 @@ export default function AdditionalExpensesScreen() {
       return;
     }
 
-    if (Number.isNaN(normalizedAmount) || normalizedAmount <= 0) {
-      setErrorMessage("Jumlah harus lebih dari 0");
+    if (Number.isNaN(normalizedAmount)) {
+      setErrorMessage("Jumlah harus angka");
       return;
     }
 
@@ -162,7 +163,7 @@ export default function AdditionalExpensesScreen() {
                     Yuk lengkapi daftar teman kamu
                   </Text>
                   <Text style={styles.participantEmptySubtitle}>
-                    Tambah minimal 2 teman sebelum catat additional expense.
+                    Tambah minimal 2 teman sebelum mencatat additional expense.
                   </Text>
                 </View>
                 <MaterialCommunityIcons
@@ -207,7 +208,7 @@ export default function AdditionalExpensesScreen() {
                   onChangeText={handleAmountChange}
                   placeholder="0"
                   placeholderTextColor="#687076"
-                  keyboardType="numeric"
+                  keyboardType="numbers-and-punctuation"
                   style={styles.input}
                   returnKeyType="done"
                 />
@@ -546,7 +547,7 @@ const styles = StyleSheet.create({
     fontFamily: Poppins.regular,
   },
   saveButton: {
-    backgroundColor: "#7056ec",
+    backgroundColor: "#3462F2",
     paddingVertical: 16,
     borderRadius: 12,
     alignItems: "center",
@@ -660,7 +661,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#ffffff",
   },
   footerButton: {
-    backgroundColor: "#7056ec",
+    backgroundColor: "#3462F2",
     borderRadius: 12,
     paddingVertical: 16,
     alignItems: "center",

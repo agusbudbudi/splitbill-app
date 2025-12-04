@@ -6,6 +6,7 @@ import {
   ActivityIndicator,
   Alert,
   Image,
+  Platform,
   Pressable,
   ScrollView,
   StyleSheet,
@@ -14,7 +15,6 @@ import {
   TextInput,
   TouchableOpacity,
   View,
-  Platform,
 } from "react-native";
 import { SafeAreaView } from "react-native-safe-area-context";
 
@@ -22,7 +22,7 @@ import { useAuth } from "@/context/auth-context";
 
 const API_URL = "https://splitbillbe.netlify.app/api/reviews";
 const REVIEW_COOLDOWN_KEY = "lastReviewSubmissionTime";
-const COOLDOWN_HOURS = 24;
+const COOLDOWN_HOURS = 1;
 
 async function getCooldownTime(): Promise<string | null> {
   try {
@@ -62,7 +62,7 @@ function formatTimeLeft(milliseconds: number) {
   const minutes = Math.floor((totalSeconds % 3600) / 60);
   const seconds = totalSeconds % 60;
 
-  let message = "Silakan coba lagi dalam";
+  let message = "Kirim ulasan selanjutnya setelah";
   if (hours > 0) {
     message += ` ${hours} jam`;
   }
@@ -83,7 +83,7 @@ export default function ReviewScreen() {
   useLayoutEffect(() => {
     navigation.setOptions({
       title: "Beri Ulasan",
-      headerStyle: { backgroundColor: "#1E4ED8", borderBottomWidth: 0 },
+      headerStyle: { backgroundColor: "#3462F2", borderBottomWidth: 0 },
       headerTintColor: "#ffffff",
       headerTitleStyle: { color: "#ffffff" },
       headerBackTitleStyle: { color: "#ffffff" },
@@ -341,7 +341,7 @@ export default function ReviewScreen() {
             </Text>
             <Switch
               trackColor={{ false: "#E2E8F0", true: "#818cf8" }}
-              thumbColor={contactPermission ? "#4f46e5" : "#f4f3f4"}
+              thumbColor={contactPermission ? "#3462F2" : "#f4f3f4"}
               onValueChange={setContactPermission}
               value={contactPermission}
               disabled={isCooldown}
@@ -436,7 +436,7 @@ const styles = StyleSheet.create({
     zIndex: 1,
   },
   hero: {
-    backgroundColor: "#1E4ED8",
+    backgroundColor: "#3462F2",
     padding: 20,
     flexDirection: "row",
     alignItems: "flex-start",
@@ -512,7 +512,7 @@ const styles = StyleSheet.create({
     backgroundColor: "#f8fafc",
   },
   inputFocused: {
-    borderColor: "#4f46e5",
+    borderColor: "#3462F2",
     backgroundColor: "#ffffff",
   },
   inputDisabled: {
@@ -568,7 +568,7 @@ const styles = StyleSheet.create({
     justifyContent: "center",
     gap: 8,
     borderRadius: 12,
-    backgroundColor: "#4f46e5",
+    backgroundColor: "#3462F2",
     paddingVertical: 14,
   },
   submitButtonDisabled: {
