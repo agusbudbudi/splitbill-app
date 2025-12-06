@@ -7,8 +7,6 @@ import {
   useMemo,
   useState,
 } from "react";
-import { Platform } from "react-native";
-import * as SecureStore from "expo-secure-store";
 
 import { useAuth } from "@/context/auth-context";
 import {
@@ -18,6 +16,10 @@ import {
 } from "@/lib/split-bill/api";
 import { calculateSplitBillSummary } from "@/lib/split-bill/calculations";
 import {
+  loadPaymentMethods,
+  savePaymentMethods,
+} from "@/lib/split-bill/payment-method-storage";
+import {
   AdditionalExpense,
   BankPaymentMethod,
   EWalletPaymentMethod,
@@ -26,14 +28,11 @@ import {
   PaymentMethod,
   SplitBillSummary,
 } from "@/lib/split-bill/types";
-import {
-  savePaymentMethods,
-  loadPaymentMethods,
-} from "@/lib/split-bill/payment-method-storage";
 
 type SplitBillState = {
   activityName: string;
   participants: Participant[];
+  selectedParticipantIds: string[]; // Added
   expenses: Expense[];
   additionalExpenses: AdditionalExpense[];
   paymentMethods: PaymentMethod[];
@@ -43,6 +42,7 @@ type SplitBillState = {
 type SplitBillContextValue = {
   activityName: string;
   participants: Participant[];
+  selectedParticipantIds: string[]; // Added
   expenses: Expense[];
   additionalExpenses: AdditionalExpense[];
   paymentMethods: PaymentMethod[];
@@ -50,6 +50,9 @@ type SplitBillContextValue = {
   summary: SplitBillSummary;
   addParticipant: (name: string) => Promise<void>;
   removeParticipant: (participantId: string) => Promise<void>;
+  toggleParticipantSelection: (participantId: string) => void; // Added
+  selectAllParticipants: () => void; // Added
+  clearParticipantSelection: () => void; // Added
   addExpense: (payload: Omit<Expense, "id" | "createdAt">) => void;
   removeExpense: (expenseId: string) => void;
   updateExpense: (
@@ -87,6 +90,7 @@ function createId(prefix: string): string {
 const initialState: SplitBillState = {
   activityName: "",
   participants: [],
+  selectedParticipantIds: [], // Added
   expenses: [],
   additionalExpenses: [],
   paymentMethods: [],
@@ -118,6 +122,16 @@ export function SplitBillProvider({ children }: { children: ReactNode }) {
         setState((current) => ({
           ...current,
           participants,
+          // Auto-select all participants initially or keep empty?
+          // Based on user request "minimum select 2", let's start empty or maybe select all for convenience?
+          // User said "card teman bisa di click untuk select", implies manual selection.
+          // But "saat ini semua teman yang ditambahkan display as chip", so maybe default to all selected?
+          // Let's default to empty to force selection as per "minimum select 2" requirement flow.
+          // Actually, if I default to empty, existing users might be confused.
+          // But this is a new feature request.
+          // Let's initialize selectedParticipantIds with all participants for backward compatibility/convenience?
+          // No, user wants explicit selection flow.
+          selectedParticipantIds: [],
         }));
       } catch (error) {
         console.error("Failed to load participants", error);
@@ -149,7 +163,12 @@ export function SplitBillProvider({ children }: { children: ReactNode }) {
     if (!isInitializing && isAuthenticated) {
       savePaymentMethods(state.paymentMethods, state.selectedPaymentMethodIds);
     }
-  }, [state.paymentMethods, state.selectedPaymentMethodIds, isInitializing, isAuthenticated]);
+  }, [
+    state.paymentMethods,
+    state.selectedPaymentMethodIds,
+    isInitializing,
+    isAuthenticated,
+  ]);
 
   const addParticipant = useCallback(
     async (name: string) => {
@@ -187,6 +206,11 @@ export function SplitBillProvider({ children }: { children: ReactNode }) {
         return {
           ...current,
           participants: [...current.participants, participant],
+          // Auto-select newly added participant? Maybe yes for better UX
+          selectedParticipantIds: [
+            ...current.selectedParticipantIds,
+            participant.id,
+          ],
         };
       });
     },
@@ -200,6 +224,9 @@ export function SplitBillProvider({ children }: { children: ReactNode }) {
       setState((current) => {
         const participants = current.participants.filter(
           (item) => item.id !== participantId
+        );
+        const selectedParticipantIds = current.selectedParticipantIds.filter(
+          (id) => id !== participantId
         );
         const expenses = current.expenses.filter(
           (expense) =>
@@ -221,6 +248,7 @@ export function SplitBillProvider({ children }: { children: ReactNode }) {
         return {
           ...current,
           participants,
+          selectedParticipantIds,
           expenses,
           additionalExpenses,
         };
@@ -240,12 +268,37 @@ export function SplitBillProvider({ children }: { children: ReactNode }) {
     [isAuthenticated, state]
   );
 
+  const toggleParticipantSelection = useCallback((participantId: string) => {
+    setState((current) => {
+      const exists = current.selectedParticipantIds.includes(participantId);
+      const selectedParticipantIds = exists
+        ? current.selectedParticipantIds.filter((id) => id !== participantId)
+        : [...current.selectedParticipantIds, participantId];
+
+      return {
+        ...current,
+        selectedParticipantIds,
+      };
+    });
+  }, []);
+
+  const selectAllParticipants = useCallback(() => {
+    setState((current) => ({
+      ...current,
+      selectedParticipantIds: current.participants.map((p) => p.id),
+    }));
+  }, []);
+
+  const clearParticipantSelection = useCallback(() => {
+    setState((current) => ({
+      ...current,
+      selectedParticipantIds: [],
+    }));
+  }, []);
+
   const addExpense = useCallback(
     (payload: Omit<Expense, "id" | "createdAt">) => {
-      if (
-        !payload.description.trim() ||
-        payload.participants.length === 0
-      ) {
+      if (!payload.description.trim() || payload.participants.length === 0) {
         return;
       }
 
@@ -518,6 +571,7 @@ export function SplitBillProvider({ children }: { children: ReactNode }) {
     setState((current) => ({
       ...initialState,
       participants: current.participants,
+      selectedParticipantIds: [], // Reset selection too
     }));
   }, []);
 
@@ -526,6 +580,11 @@ export function SplitBillProvider({ children }: { children: ReactNode }) {
       return { total: 0, perParticipant: [], settlements: [] };
     }
 
+    // Note: Summary calculation currently uses all participants.
+    // If we want summary to only reflect selected participants, we should filter here.
+    // However, usually summary should reflect expenses. Expenses already have participants associated.
+    // So summary calculation logic might not need to change unless we want to filter out participants who are not selected but have expenses (which shouldn't happen if we manage state correctly).
+    // For now, let's keep it as is.
     return calculateSplitBillSummary(
       state.participants,
       state.expenses,
@@ -537,6 +596,7 @@ export function SplitBillProvider({ children }: { children: ReactNode }) {
     () => ({
       activityName: state.activityName,
       participants: state.participants,
+      selectedParticipantIds: state.selectedParticipantIds, // Added
       expenses: state.expenses,
       additionalExpenses: state.additionalExpenses,
       paymentMethods: state.paymentMethods,
@@ -544,6 +604,9 @@ export function SplitBillProvider({ children }: { children: ReactNode }) {
       summary,
       addParticipant,
       removeParticipant,
+      toggleParticipantSelection, // Added
+      selectAllParticipants, // Added
+      clearParticipantSelection, // Added
       addExpense,
       removeExpense,
       updateExpense,
@@ -562,6 +625,9 @@ export function SplitBillProvider({ children }: { children: ReactNode }) {
       summary,
       addParticipant,
       removeParticipant,
+      toggleParticipantSelection, // Added
+      selectAllParticipants, // Added
+      clearParticipantSelection, // Added
       addExpense,
       removeExpense,
       updateExpense,

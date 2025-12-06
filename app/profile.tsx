@@ -4,7 +4,6 @@ import { useEffect } from "react";
 import {
   ActivityIndicator,
   Image,
-  Linking,
   Pressable,
   ScrollView,
   Share,
@@ -27,14 +26,14 @@ export default function ProfileScreen() {
   const { user, isAuthenticated, logout, isSubmitting, refreshUser } =
     useAuth();
 
-  const background = useThemeColor({}, 'background');
-  const card = useThemeColor({}, 'card');
-  const text = useThemeColor({}, 'text');
-  const textSecondary = useThemeColor({}, 'textSecondary');
-  const tint = useThemeColor({}, 'tint');
-  const error = useThemeColor({}, 'error');
-  const icon = useThemeColor({}, 'icon');
-  const success = useThemeColor({}, 'success');
+  const background = useThemeColor({}, "background");
+  const card = useThemeColor({}, "card");
+  const text = useThemeColor({}, "text");
+  const textSecondary = useThemeColor({}, "textSecondary");
+  const tint = useThemeColor({}, "tint");
+  const error = useThemeColor({}, "error");
+  const icon = useThemeColor({}, "icon");
+  const success = useThemeColor({}, "success");
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -52,15 +51,11 @@ export default function ProfileScreen() {
     try {
       await Share.share({
         message:
-          "Cobain SplitBill buat kelola tagihan bareng teman! https://splitbill-alpha.vercel.app",
+          "Cobain SplitBill buat kelola tagihan bareng teman! https://splitbill.my.id/",
       });
     } catch {
       // ignore share cancellation
     }
-  };
-
-  const openUrl = (url: string) => {
-    Linking.openURL(url).catch(() => undefined);
   };
 
   const handleLogout = async () => {
@@ -70,7 +65,10 @@ export default function ProfileScreen() {
 
   if (!isAuthenticated) {
     return (
-      <SafeAreaView edges={["left", "right", "bottom"]} style={[styles.safeArea, { backgroundColor: background }]}>
+      <SafeAreaView
+        edges={["left", "right", "bottom"]}
+        style={[styles.safeArea, { backgroundColor: background }]}
+      >
         <View style={styles.loadingContainer}>
           <ActivityIndicator color={tint} />
         </View>
@@ -110,24 +108,38 @@ export default function ProfileScreen() {
   ];
 
   return (
-    <SafeAreaView edges={["left", "right", "bottom"]} style={[styles.safeArea, { backgroundColor: background }]}>
+    <SafeAreaView
+      edges={["left", "right", "bottom"]}
+      style={[styles.safeArea, { backgroundColor: background }]}
+    >
       <ScrollView contentContainerStyle={styles.container}>
         <Image source={{ uri: BANNER_URI }} style={styles.banner} />
 
         <View style={[styles.profileCard, { backgroundColor: card }]}>
           <View style={styles.profileMain}>
-            <View style={[styles.profileAvatar, { backgroundColor: hexToRgba(tint, 0.1) }]}>
+            <View
+              style={[
+                styles.profileAvatar,
+                { backgroundColor: hexToRgba(tint, 0.1) },
+              ]}
+            >
               <MaterialIcons name="person" size={24} color={text} />
             </View>
             <View style={styles.profileInfo}>
               <Text style={[styles.name, { color: text }]}>
                 {user?.name?.trim() || "Pengguna Split Bill"}
               </Text>
-              <Text style={[styles.email, { color: textSecondary }]}>{user?.email || "-"}</Text>
+              <Text style={[styles.email, { color: textSecondary }]}>
+                {user?.email || "-"}
+              </Text>
             </View>
           </View>
           <Pressable
-            style={[styles.logoutButton, { backgroundColor: hexToRgba(error, 0.16) }, isSubmitting && styles.logoutDisabled]}
+            style={[
+              styles.logoutButton,
+              { backgroundColor: hexToRgba(error, 0.16) },
+              isSubmitting && styles.logoutDisabled,
+            ]}
             onPress={handleLogout}
             disabled={isSubmitting}
           >
@@ -139,7 +151,12 @@ export default function ProfileScreen() {
           </Pressable>
         </View>
 
-        <View style={[styles.menuCard, { backgroundColor: card, borderBottomColor: background }]}>
+        <View
+          style={[
+            styles.menuCard,
+            { backgroundColor: card, borderBottomColor: background },
+          ]}
+        >
           {primaryMenus.map((item, index) => (
             <Pressable
               key={item.label}
@@ -151,10 +168,17 @@ export default function ProfileScreen() {
               onPress={item.onPress}
             >
               <View style={styles.menuLeft}>
-                <View style={[styles.menuIconWrap, { backgroundColor: hexToRgba(tint, 0.12) }]}>
+                <View
+                  style={[
+                    styles.menuIconWrap,
+                    { backgroundColor: hexToRgba(tint, 0.12) },
+                  ]}
+                >
                   <MaterialIcons name={item.icon} size={16} color={tint} />
                 </View>
-                <Text style={[styles.menuText, { color: text }]}>{item.label}</Text>
+                <Text style={[styles.menuText, { color: text }]}>
+                  {item.label}
+                </Text>
               </View>
               <MaterialIcons name="chevron-right" size={16} color={icon} />
             </Pressable>
@@ -173,10 +197,17 @@ export default function ProfileScreen() {
               onPress={item.onPress}
             >
               <View style={styles.menuLeft}>
-                <View style={[styles.menuIconWrap, { backgroundColor: hexToRgba(tint, 0.12) }]}>
+                <View
+                  style={[
+                    styles.menuIconWrap,
+                    { backgroundColor: hexToRgba(tint, 0.12) },
+                  ]}
+                >
                   <MaterialIcons name={item.icon} size={16} color={tint} />
                 </View>
-                <Text style={[styles.menuText, { color: text }]}>{item.label}</Text>
+                <Text style={[styles.menuText, { color: text }]}>
+                  {item.label}
+                </Text>
               </View>
               <MaterialIcons name="chevron-right" size={16} color={icon} />
             </Pressable>
@@ -184,14 +215,20 @@ export default function ProfileScreen() {
         </View>
 
         <View style={[styles.contactCard, { backgroundColor: card }]}>
-          <Text style={[styles.contactTitle, { color: text }]}>Kontak Kami</Text>
+          <Text style={[styles.contactTitle, { color: text }]}>
+            Kontak Kami
+          </Text>
           <View style={styles.contactRow}>
             <MaterialCommunityIcons name="whatsapp" size={20} color={success} />
-            <Text style={[styles.contactText, { color: textSecondary }]}>WhatsApp: 0855-5949-6968</Text>
+            <Text style={[styles.contactText, { color: textSecondary }]}>
+              WhatsApp: 0855-5949-6968
+            </Text>
           </View>
           <View style={styles.contactRow}>
             <MaterialIcons name="email" size={18} color={tint} />
-            <Text style={[styles.contactText, { color: textSecondary }]}>Email: agusbudbudi@gmail.com</Text>
+            <Text style={[styles.contactText, { color: textSecondary }]}>
+              Email: agusbudbudi@gmail.com
+            </Text>
           </View>
           <View style={styles.contactRow}>
             <MaterialCommunityIcons
@@ -199,7 +236,9 @@ export default function ProfileScreen() {
               size={20}
               color="#f97316"
             />
-            <Text style={[styles.contactText, { color: textSecondary }]}>Instagram: @splitbill.app</Text>
+            <Text style={[styles.contactText, { color: textSecondary }]}>
+              Instagram: @splitbill.app
+            </Text>
           </View>
         </View>
 
@@ -233,7 +272,7 @@ const styles = StyleSheet.create({
   },
   container: {
     padding: 8,
-    gap: 16,
+    gap: 14,
   },
   banner: {
     height: 118,

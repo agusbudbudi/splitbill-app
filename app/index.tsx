@@ -303,12 +303,12 @@ export default function HomeScreen() {
             <View style={styles.heroRow}>
               <View style={styles.heroCopy}>
                 <Text style={[styles.title, { color: card }]}>
-                  Bagi tagihan makin Easy dan Cepat
+                  Let's make splitting bills effortless! ✨
                 </Text>
                 <Text
                   style={[styles.subtitle, { color: hexToRgba(card, 0.8) }]}
                 >
-                  Scan bill pakai AI, split bill otomatis. Cepat dan akurat
+                  Cuma scan, langsung auto split. Cepat & tepat!
                 </Text>
               </View>
               <Image
@@ -335,8 +335,8 @@ export default function HomeScreen() {
                 <Text
                   style={[styles.welcomeText, { color: hexToRgba(card, 0.9) }]}
                 >
-                  Hi {user?.name?.split(" ")[0] || "Gengs"}! Split your bills,
-                  super fast & easy!
+                  {user?.name?.split(" ")[0] || "Gengs"}! Ready to split bills
+                  tanpa pusing? 😎
                 </Text>
               </View>
             )}

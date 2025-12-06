@@ -1,6 +1,6 @@
 import { MaterialCommunityIcons, MaterialIcons } from "@expo/vector-icons";
-import { useRouter } from "expo-router";
-import { useMemo, useState } from "react";
+import { useNavigation, useRouter } from "expo-router";
+import { useLayoutEffect, useMemo, useState } from "react";
 import {
   GestureResponderEvent,
   Image,
@@ -57,6 +57,7 @@ function isBankMethod(method: PaymentMethod): method is BankPaymentMethod {
 
 export default function PaymentMethodsScreen() {
   const router = useRouter();
+  const navigation = useNavigation();
   const {
     paymentMethods,
     selectedPaymentMethodIds,
@@ -73,7 +74,18 @@ export default function PaymentMethodsScreen() {
   const error = useThemeColor({}, "error");
   const icon = useThemeColor({}, "icon");
   const success = useThemeColor({}, "success");
+  const primary = useThemeColor({}, "primary");
   const primaryDark = useThemeColor({}, "primaryDark");
+
+  useLayoutEffect(() => {
+    navigation.setOptions({
+      title: "Metode Pembayaran",
+      headerStyle: { backgroundColor: primary, borderBottomWidth: 0 },
+      headerTintColor: card,
+      headerTitleStyle: { color: card },
+      headerBackTitleStyle: { color: card },
+    });
+  }, [navigation, primary, card]);
 
   const [methodType, setMethodType] = useState<MethodType>("bank_transfer");
   const [ownerName, setOwnerName] = useState("");
@@ -192,17 +204,15 @@ export default function PaymentMethodsScreen() {
       style={[styles.safeArea, { backgroundColor: background }]}
     >
       <ScrollView contentContainerStyle={styles.container}>
-        <View style={[styles.hero, { backgroundColor: hexToRgba(tint, 0.05) }]}>
-          <View
-            style={[styles.heroIcon, { backgroundColor: hexToRgba(tint, 0.2) }]}
-          >
-            <MaterialIcons name="wallet" size={26} color={tint} />
+        <View style={[styles.topHero, { backgroundColor: primary }]}>
+          <View style={[styles.topHeroIcon, { backgroundColor: "#4D75F5" }]}>
+            <MaterialIcons name="wallet" size={26} color={card} />
           </View>
           <View style={styles.heroText}>
-            <Text style={[styles.heroTitle, { color: text }]}>
+            <Text style={[styles.heroTitle, { color: card }]}>
               Kelola Metode Pembayaran
             </Text>
-            <Text style={[styles.heroSubtitle, { color: text, opacity: 0.6 }]}>
+            <Text style={[styles.heroSubtitle, { color: card, opacity: 0.8 }]}>
               Simpan detail pembayaran favoritmu dan pilih untuk dibagikan ke
               teman.
             </Text>
@@ -481,13 +491,32 @@ export default function PaymentMethodsScreen() {
             <Text style={[styles.sectionTitle, { color: text }]}>
               Metode tersimpan
             </Text>
-            <Text style={[styles.sectionBadge, { color: tint }]}>
-              {methodCountLabel} dipilih
-            </Text>
+            {methodCountLabel > 0 && (
+              <Text style={[styles.sectionBadge, { color: tint }]}>
+                {methodCountLabel} dipilih
+              </Text>
+            )}
           </View>
-          <Text style={[styles.sectionSubtitle, { color: textSecondary }]}>
-            Tap kartu untuk pilih. Metode terpilih akan tampil di Ringkasan.
-          </Text>
+          {sortedMethods.length > 0 && (
+            <View
+              style={[
+                styles.infoCard,
+                { backgroundColor: hexToRgba("#3B82F6", 0.1) },
+              ]}
+            >
+              <View
+                style={[
+                  styles.infoIconContainer,
+                  { backgroundColor: "#3B82F6" },
+                ]}
+              >
+                <MaterialIcons name="info" size={18} color="#FFFFFF" />
+              </View>
+              <Text style={[styles.infoText, { color: "#1E40AF" }]}>
+                Tap kartu untuk pilih. Metode terpilih akan tampil di Ringkasan.
+              </Text>
+            </View>
+          )}
 
           {sortedMethods.length === 0 ? (
             <View
@@ -618,18 +647,27 @@ const styles = StyleSheet.create({
   container: {
     padding: 8,
     gap: 16,
+    paddingTop: 110,
   },
-  hero: {
-    borderRadius: 20,
+  topHero: {
     padding: 20,
     flexDirection: "row",
+    alignItems: "flex-start",
     gap: 14,
-    alignItems: "center",
+    position: "absolute",
+    top: 0,
+    left: 0,
+    right: 0,
+    zIndex: 0,
+    minHeight: 140,
+    borderBottomLeftRadius: 12,
+    borderBottomRightRadius: 12,
+    overflow: "hidden",
   },
-  heroIcon: {
+  topHeroIcon: {
     width: 52,
     height: 52,
-    borderRadius: 26,
+    borderRadius: 16,
     alignItems: "center",
     justifyContent: "center",
   },
@@ -747,8 +785,8 @@ const styles = StyleSheet.create({
     gap: 10,
   },
   emptyImage: {
-    width: 100,
-    height: 100,
+    width: 80,
+    height: 80,
   },
   emptyTitle: {
     fontFamily: Poppins.semibold,
@@ -797,6 +835,27 @@ const styles = StyleSheet.create({
   methodMeta: {
     fontFamily: Poppins.regular,
     fontSize: 12,
+  },
+  infoCard: {
+    flexDirection: "row",
+    alignItems: "flex-start",
+    gap: 12,
+    padding: 14,
+    borderRadius: 12,
+  },
+  infoIconContainer: {
+    width: 28,
+    height: 28,
+    borderRadius: 14,
+    alignItems: "center",
+    justifyContent: "center",
+    marginTop: 2,
+  },
+  infoText: {
+    flex: 1,
+    fontSize: 12,
+    fontFamily: Poppins.medium,
+    lineHeight: 20,
   },
   removeButton: {
     flexDirection: "row",

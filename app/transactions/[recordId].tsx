@@ -41,6 +41,9 @@ export default function SplitBillDetailScreen() {
   const navigation = useNavigation();
   const captureAreaRef = useRef<View>(null);
   const [isSaving, setIsSaving] = useState(false);
+  const [isExpensesExpanded, setIsExpensesExpanded] = useState(false);
+  const [isAdditionalExpensesExpanded, setIsAdditionalExpensesExpanded] =
+    useState(false);
 
   useLayoutEffect(() => {
     navigation.setOptions({
@@ -619,7 +622,6 @@ _Dibuat dengan Split Bill App_`;
                       );
                     })}
                 </View>
-
                 <View style={styles.section}>
                   <View style={styles.sectionBody}>
                     <Text style={styles.sectionTitle}>Pelunasan</Text>
@@ -648,35 +650,53 @@ _Dibuat dengan Split Bill App_`;
 
                 <View style={styles.section}>
                   <View style={styles.sectionBody}>
-                    <View style={styles.sectionTitleContainer}>
-                      <Text style={styles.sectionTitle}>Pengeluaran</Text>
-                      <View style={styles.participantCountBadge}>
-                        <Text style={styles.participantCountBadgeText}>
-                          {expenseCount}
-                        </Text>
-                      </View>
-                    </View>
-                    {record.expenses.length === 0 ? (
-                      <Text style={styles.emptyText}>
-                        Tidak ada pengeluaran utama.
-                      </Text>
-                    ) : (
-                      record.expenses.map((expense) => (
-                        <View key={expense.id} style={styles.expenseRow}>
-                          <View style={styles.expenseInfo}>
-                            <Text style={styles.expenseName}>
-                              {expense.description}
-                            </Text>
-                            <Text style={styles.expenseMeta}>
-                              Dibayar oleh {getName(expense.paidBy)} • Dibagi{" "}
-                              {expense.participants.length} orang
-                            </Text>
-                          </View>
-                          <Text style={styles.expenseAmount}>
-                            {formatCurrency(expense.amount)}
+                    <Pressable
+                      style={styles.sectionHeaderClickable}
+                      onPress={() => setIsExpensesExpanded(!isExpensesExpanded)}
+                    >
+                      <View style={styles.sectionTitleContainer}>
+                        <Text style={styles.sectionTitle}>Pengeluaran</Text>
+                        <View style={styles.participantCountBadge}>
+                          <Text style={styles.participantCountBadgeText}>
+                            {expenseCount}
                           </Text>
                         </View>
-                      ))
+                      </View>
+                      <MaterialIcons
+                        name={
+                          isExpensesExpanded
+                            ? "keyboard-arrow-up"
+                            : "keyboard-arrow-down"
+                        }
+                        size={20}
+                        color="#64748b"
+                      />
+                    </Pressable>
+                    {isExpensesExpanded && (
+                      <>
+                        {record.expenses.length === 0 ? (
+                          <Text style={styles.emptyText}>
+                            Tidak ada pengeluaran utama.
+                          </Text>
+                        ) : (
+                          record.expenses.map((expense) => (
+                            <View key={expense.id} style={styles.expenseRow}>
+                              <View style={styles.expenseInfo}>
+                                <Text style={styles.expenseName}>
+                                  {expense.description}
+                                </Text>
+                                <Text style={styles.expenseMeta}>
+                                  Dibayar oleh {getName(expense.paidBy)} •
+                                  Dibagi {expense.participants.length} orang
+                                </Text>
+                              </View>
+                              <Text style={styles.expenseAmount}>
+                                {formatCurrency(expense.amount)}
+                              </Text>
+                            </View>
+                          ))
+                        )}
+                      </>
                     )}
                   </View>
                 </View>
@@ -684,37 +704,58 @@ _Dibuat dengan Split Bill App_`;
                 {record.additionalExpenses.length > 0 && (
                   <View style={styles.section}>
                     <View style={styles.sectionBody}>
-                      <View style={styles.sectionTitleContainer}>
-                        <Text style={styles.sectionTitle}>
-                          Additional Expense
-                        </Text>
-                        <View style={styles.participantCountBadge}>
-                          <Text style={styles.participantCountBadgeText}>
-                            {additionalExpenseCount}
+                      <Pressable
+                        style={styles.sectionHeaderClickable}
+                        onPress={() =>
+                          setIsAdditionalExpensesExpanded(
+                            !isAdditionalExpensesExpanded
+                          )
+                        }
+                      >
+                        <View style={styles.sectionTitleContainer}>
+                          <Text style={styles.sectionTitle}>
+                            Additional Expense
                           </Text>
-                        </View>
-                      </View>
-                      {record.additionalExpenses.map((expense) => (
-                        <View key={expense.id} style={styles.expenseRow}>
-                          <View style={styles.expenseInfo}>
-                            <Text style={styles.expenseName}>
-                              {expense.description}
-                            </Text>
-                            <Text style={styles.expenseMeta}>
-                              Dibayar oleh {getName(expense.paidBy)} •
-                              Proporsional ke {expense.participants.length}{" "}
-                              orang
+                          <View style={styles.participantCountBadge}>
+                            <Text style={styles.participantCountBadgeText}>
+                              {additionalExpenseCount}
                             </Text>
                           </View>
-                          <Text style={styles.expenseAmount}>
-                            {formatCurrency(expense.amount)}
-                          </Text>
                         </View>
-                      ))}
+                        <MaterialIcons
+                          name={
+                            isAdditionalExpensesExpanded
+                              ? "keyboard-arrow-up"
+                              : "keyboard-arrow-down"
+                          }
+                          size={20}
+                          color="#64748b"
+                        />
+                      </Pressable>
+                      {isAdditionalExpensesExpanded && (
+                        <>
+                          {record.additionalExpenses.map((expense) => (
+                            <View key={expense.id} style={styles.expenseRow}>
+                              <View style={styles.expenseInfo}>
+                                <Text style={styles.expenseName}>
+                                  {expense.description}
+                                </Text>
+                                <Text style={styles.expenseMeta}>
+                                  Dibayar oleh {getName(expense.paidBy)} •
+                                  Proporsional ke {expense.participants.length}{" "}
+                                  orang
+                                </Text>
+                              </View>
+                              <Text style={styles.expenseAmount}>
+                                {formatCurrency(expense.amount)}
+                              </Text>
+                            </View>
+                          ))}
+                        </>
+                      )}
                     </View>
                   </View>
                 )}
-
                 {hasAnySavedMethods && (
                   <View style={styles.section}>
                     <View style={styles.sectionBody}>
@@ -927,7 +968,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 0,
-    minHeight: 140,
+    minHeight: 130,
     borderBottomLeftRadius: 12,
     borderBottomRightRadius: 12,
     overflow: "hidden",
@@ -974,6 +1015,11 @@ const styles = StyleSheet.create({
     flexDirection: "row",
     alignItems: "center",
     gap: 10,
+  },
+  sectionHeaderClickable: {
+    flexDirection: "row",
+    alignItems: "center",
+    justifyContent: "space-between",
   },
   personCard: {
     borderRadius: 16,

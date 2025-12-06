@@ -18,6 +18,7 @@ import {
 import { SafeAreaView } from "react-native-safe-area-context";
 
 import { useAuth } from "@/context/auth-context";
+import { useSnackbar } from "@/context/snackbar-context";
 import { useSplitBill } from "@/context/split-bill-context";
 import { formatCurrency, parseCurrency } from "@/lib/split-bill/format";
 
@@ -25,6 +26,13 @@ type ScanItem = {
   name: string;
   quantity?: string | number;
   total: number;
+  participants: string[]; // IDs of participants for this item
+};
+
+type ScannedAdditionalExpense = {
+  title: string;
+  amount: number;
+  participants: string[]; // IDs of participants for this additional expense
 };
 
 const BASE_URL = "https://splitbillbe.netlify.app";
@@ -72,7 +80,20 @@ export default function ScanScreen() {
     });
   }, [navigation]);
   const { isAuthenticated } = useAuth();
-  const { participants, addExpense } = useSplitBill();
+  const { showSnackbar } = useSnackbar();
+  const {
+    participants: allParticipants,
+    selectedParticipantIds,
+    addExpense,
+    updateActivityName,
+    addAdditionalExpense,
+  } = useSplitBill();
+
+  // Filter participants based on selection
+  const participants = useMemo(() => {
+    if (selectedParticipantIds.length === 0) return allParticipants;
+    return allParticipants.filter((p) => selectedParticipantIds.includes(p.id));
+  }, [allParticipants, selectedParticipantIds]);
 
   const [permissionChecked, setPermissionChecked] = useState(false);
   const [cameraPermissionChecked, setCameraPermissionChecked] = useState(false);
@@ -84,8 +105,13 @@ export default function ScanScreen() {
     []
   );
   const [isScanning, setIsScanning] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [success, setSuccess] = useState<string | null>(null);
+  const [merchantName, setMerchantName] = useState<string | null>(null);
+  const [scannedAdditionalExpenses, setScannedAdditionalExpenses] = useState<
+    ScannedAdditionalExpense[]
+  >([]);
+  const [billDate, setBillDate] = useState<string | null>(null);
+  const [receiptNumber, setReceiptNumber] = useState<string | null>(null);
+  const [loadingMessageIndex, setLoadingMessageIndex] = useState(0);
 
   useEffect(() => {
     if (!isAuthenticated) {
@@ -115,11 +141,47 @@ export default function ScanScreen() {
     return scanItems.reduce((sum, item) => sum + item.total, 0);
   }, [scanItems]);
 
+  const totalAdditionalExpenses = useMemo(() => {
+    return scannedAdditionalExpenses.reduce(
+      (sum, expense) => sum + expense.amount,
+      0
+    );
+  }, [scannedAdditionalExpenses]);
+
+  const grandTotal = useMemo(() => {
+    return totalAmount + totalAdditionalExpenses;
+  }, [totalAmount, totalAdditionalExpenses]);
+
+  // Loading messages for scan process
+  const loadingMessages = [
+    "Chill dulu AI lagi baca bill kamu ☕",
+    "Lanjut ngopi biar AI yang kerja 🤖",
+    "AI lagi itung-itung nih... 🧮",
+    "Bentar ya, lagi scan struk kamu 📄",
+  ];
+
+  // Rotate loading messages while scanning
+  useEffect(() => {
+    if (!isScanning) {
+      setLoadingMessageIndex(0);
+      return;
+    }
+
+    const interval = setInterval(() => {
+      setLoadingMessageIndex((prev) => (prev + 1) % loadingMessages.length);
+    }, 2000); // Change message every 2 seconds
+
+    return () => clearInterval(interval);
+  }, [isScanning, loadingMessages.length]);
+
   const requestPermission = async () => {
     const { status } = await ImagePicker.requestMediaLibraryPermissionsAsync();
     setPermissionChecked(true);
     if (status !== "granted") {
-      setError("Izin akses galeri dibutuhkan untuk mengunggah struk.");
+      showSnackbar({
+        message: "Izin akses galeri dibutuhkan untuk mengunggah struk.",
+        type: "error",
+      });
       return false;
     }
     return true;
@@ -129,16 +191,16 @@ export default function ScanScreen() {
     const { status } = await ImagePicker.requestCameraPermissionsAsync();
     setCameraPermissionChecked(true);
     if (status !== "granted") {
-      setError("Izin akses kamera dibutuhkan untuk mengambil foto.");
+      showSnackbar({
+        message: "Izin akses kamera dibutuhkan untuk mengambil foto.",
+        type: "error",
+      });
       return false;
     }
     return true;
   };
 
   const handlePickImage = async () => {
-    setError(null);
-    setSuccess(null);
-
     if (!permissionChecked) {
       const allowed = await requestPermission();
       if (!allowed) return;
@@ -159,9 +221,6 @@ export default function ScanScreen() {
   };
 
   const handleTakePhoto = async () => {
-    setError(null);
-    setSuccess(null);
-
     if (!cameraPermissionChecked) {
       const allowed = await requestCameraPermission();
       if (!allowed) return;
@@ -191,20 +250,66 @@ export default function ScanScreen() {
     });
   };
 
+  const handleToggleItemParticipant = (
+    itemIndex: number,
+    participantId: string
+  ) => {
+    setScanItems((currentItems) => {
+      const updatedItems = [...currentItems];
+      const item = updatedItems[itemIndex];
+
+      if (item.participants.includes(participantId)) {
+        // Allow removing all participants (validation happens on save)
+        item.participants = item.participants.filter(
+          (id) => id !== participantId
+        );
+      } else {
+        item.participants = [...item.participants, participantId];
+      }
+
+      return updatedItems;
+    });
+  };
+
+  const handleToggleAdditionalExpenseParticipant = (
+    expenseIndex: number,
+    participantId: string
+  ) => {
+    setScannedAdditionalExpenses((currentExpenses) => {
+      const updatedExpenses = [...currentExpenses];
+      const expense = updatedExpenses[expenseIndex];
+
+      if (expense.participants.includes(participantId)) {
+        // Allow removing all participants (validation happens on save)
+        expense.participants = expense.participants.filter(
+          (id) => id !== participantId
+        );
+      } else {
+        expense.participants = [...expense.participants, participantId];
+      }
+
+      return updatedExpenses;
+    });
+  };
+
   const handleScan = async () => {
     if (!selectedAsset) {
-      setError("Pilih foto struk terlebih dahulu.");
+      showSnackbar({
+        message: "Pilih foto struk terlebih dahulu.",
+        type: "error",
+      });
       return;
     }
 
     if (!hasParticipants) {
-      setError("Tambahkan minimal dua teman dulu sebelum scan.");
+      showSnackbar({
+        message: "Tambahkan minimal dua teman dulu sebelum scan.",
+        type: "error",
+      });
       return;
     }
 
     setIsScanning(true);
-    setError(null);
-    setSuccess(null);
 
     try {
       let base64 = selectedAsset.base64;
@@ -238,31 +343,86 @@ export default function ScanScreen() {
       }
 
       const data = await response.json();
+
+      // Extract merchant name if available
+      const scannedMerchantName = data.merchant_name
+        ? String(data.merchant_name).trim()
+        : null;
+
+      // Extract date if available
+      const scannedDate = data.date ? String(data.date).trim() : null;
+
+      // Extract receipt number if available
+      const scannedReceiptNumber = data.receipt_number
+        ? String(data.receipt_number).trim()
+        : null;
+
       const items = Array.isArray(data.items)
         ? data.items
             .map((item: Record<string, unknown>) => ({
               name: String(item.name ?? "Item tidak diketahui"),
               quantity: item.quantity ?? null,
               total: parseCurrency(String(item.total ?? "0")),
+              participants: [], // Initialize with empty array (unselected)
             }))
             .filter((item: ScanItem) => item.total > 0)
         : [];
 
       if (items.length === 0) {
-        setError(
-          "Tidak ada item yang berhasil dibaca, coba foto yang lebih jelas."
-        );
+        showSnackbar({
+          message:
+            "Tidak ada item yang berhasil dibaca, coba foto yang lebih jelas.",
+          type: "error",
+        });
         return;
       }
 
+      // Extract additional expenses (tax, service_charge, discount)
+      const additionalExpenses: ScannedAdditionalExpense[] = [];
+
+      if (data.tax != null && data.tax !== 0) {
+        additionalExpenses.push({
+          title: "PPN",
+          amount: parseCurrency(String(data.tax)),
+          participants: [], // Default unselected
+        });
+      }
+
+      if (data.service_charge != null && data.service_charge !== 0) {
+        additionalExpenses.push({
+          title: "Service Charge",
+          amount: parseCurrency(String(data.service_charge)),
+          participants: [], // Default unselected
+        });
+      }
+
+      if (data.discount != null && data.discount !== 0) {
+        // Ensure discount is negative
+        const discountAmount = parseCurrency(String(data.discount));
+        additionalExpenses.push({
+          title: "Discount",
+          amount: discountAmount > 0 ? -discountAmount : discountAmount,
+          participants: [], // Default unselected
+        });
+      }
+
       setScanItems(items);
-      setSuccess(`Berhasil baca ${items.length} item dari struk 🎉`);
+      setMerchantName(scannedMerchantName);
+      setScannedAdditionalExpenses(additionalExpenses);
+      setBillDate(scannedDate);
+      setReceiptNumber(scannedReceiptNumber);
+      showSnackbar({
+        message: `Berhasil baca ${items.length} item & ${additionalExpenses.length} additional expense dari struk 🎉`,
+        type: "success",
+      });
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : "Terjadi kesalahan saat scan, kamu bisa coba lagi 🙁"
-      );
+      showSnackbar({
+        message:
+          err instanceof Error
+            ? err.message
+            : "Terjadi kesalahan saat scan, kamu bisa coba lagi 🙁",
+        type: "error",
+      });
     } finally {
       setIsScanning(false);
     }
@@ -270,12 +430,23 @@ export default function ScanScreen() {
 
   const handleSaveExpenses = () => {
     if (!paidBy) {
-      setError("Pilih siapa yang bayar dulu.");
+      showSnackbar({ message: "Pilih siapa yang bayar dulu.", type: "error" });
       return;
     }
 
-    if (selectedParticipants.length === 0) {
-      setError("Pilih siapa saja yang ikut split.");
+    // Validate all items first
+    const itemsWithoutParticipants = scanItems.filter(
+      (item) => !item.participants || item.participants.length === 0
+    );
+
+    if (itemsWithoutParticipants.length > 0) {
+      const itemNames = itemsWithoutParticipants
+        .map((item) => `"${item.name}"`)
+        .join(", ");
+      showSnackbar({
+        message: `Pilih minimal 1 participant untuk item: ${itemNames}`,
+        type: "error",
+      });
       return;
     }
 
@@ -283,6 +454,7 @@ export default function ScanScreen() {
 
     scanItems.forEach((item) => {
       if (item.total <= 0) return;
+
       const description = item.quantity
         ? `${item.name} x${item.quantity}`
         : item.name;
@@ -290,15 +462,64 @@ export default function ScanScreen() {
         description,
         amount: item.total,
         paidBy,
-        participants: selectedParticipants,
+        participants: item.participants,
       });
       saved += 1;
     });
 
+    // Validate additional expenses
+    const additionalExpensesWithoutParticipants =
+      scannedAdditionalExpenses.filter(
+        (expense) => !expense.participants || expense.participants.length === 0
+      );
+
+    if (additionalExpensesWithoutParticipants.length > 0) {
+      const expenseNames = additionalExpensesWithoutParticipants
+        .map((expense) => `"${expense.title}"`)
+        .join(", ");
+      showSnackbar({
+        message: `Pilih minimal 1 participant untuk additional expense: ${expenseNames}`,
+        type: "error",
+      });
+      return;
+    }
+
+    // Save additional expenses
+    let savedAdditional = 0;
+    scannedAdditionalExpenses.forEach((expense) => {
+      if (expense.amount === 0) return;
+
+      addAdditionalExpense({
+        description: expense.title,
+        amount: expense.amount,
+        paidBy,
+        participants: expense.participants,
+      });
+      savedAdditional += 1;
+    });
+
     if (saved > 0) {
-      setSuccess(`Berhasil simpan ${saved} expense dari hasil scan.`);
+      // Set activity name from merchant name if available
+      if (merchantName) {
+        updateActivityName(merchantName);
+      }
+
+      const totalSaved = saved + savedAdditional;
+      const message =
+        savedAdditional > 0
+          ? `Berhasil simpan ${saved} expense dan ${savedAdditional} additional expense dari hasil scan.`
+          : `Berhasil simpan ${saved} expense dari hasil scan.`;
+
+      showSnackbar({
+        message,
+        type: "success",
+      });
       setScanItems([]);
+      setScannedAdditionalExpenses([]);
       setSelectedAsset(null);
+      setMerchantName(null); // Reset merchant name
+      setBillDate(null); // Reset bill date
+      setReceiptNumber(null); // Reset receipt number
       setTimeout(() => router.push("/expenses"), 1000);
     }
   };
@@ -411,20 +632,23 @@ export default function ScanScreen() {
             onPress={handleScan}
           >
             {isScanning ? (
-              <ActivityIndicator color="#ffffff" />
+              <View style={styles.scanButtonLoading}>
+                <ActivityIndicator color="#ffffff" size="small" />
+                <Text style={styles.scanButtonLoadingText}>
+                  {loadingMessages[loadingMessageIndex]}
+                </Text>
+              </View>
             ) : (
               <Text style={styles.scanButtonText}>Mulai Scan</Text>
             )}
           </Pressable>
-          {error ? <Text style={styles.errorText}>{error}</Text> : null}
-          {success ? <Text style={styles.successText}>{success}</Text> : null}
         </View>
 
         {scanItems.length > 0 ? (
           <View style={styles.card}>
             <Text style={styles.cardTitle}>3. Atur hasil scan</Text>
             <Text style={styles.cardSubtitle}>
-              Pilih siapa yang bayar dan siapa yang ikut split.
+              Pilih siapa yang bayar dan atur participant untuk setiap item.
             </Text>
 
             <View style={styles.selectorBlock}>
@@ -437,31 +661,6 @@ export default function ScanScreen() {
                       key={person.id}
                       style={[styles.chip, active && styles.chipActive]}
                       onPress={() => setPaidBy(person.id)}
-                    >
-                      <Text
-                        style={[
-                          styles.chipText,
-                          active && styles.chipTextActive,
-                        ]}
-                      >
-                        {person.name}
-                      </Text>
-                    </Pressable>
-                  );
-                })}
-              </View>
-            </View>
-
-            <View style={styles.selectorBlock}>
-              <Text style={styles.selectorLabel}>Ikut split bill</Text>
-              <View style={styles.chipGroupWrap}>
-                {participants.map((person) => {
-                  const active = selectedParticipants.includes(person.id);
-                  return (
-                    <Pressable
-                      key={person.id}
-                      style={[styles.chip, active && styles.chipActive]}
-                      onPress={() => handleToggleParticipant(person.id)}
                     >
                       <Text
                         style={[
@@ -494,20 +693,171 @@ export default function ScanScreen() {
             </View>
 
             {scanItems.map((item, index) => (
-              <View key={`${item.name}-${index}`} style={styles.scanItemRow}>
-                <View>
-                  <Text style={styles.scanItemName}>{item.name}</Text>
-                  {item.quantity ? (
-                    <Text style={styles.scanItemMeta}>
-                      Qty: {item.quantity}
-                    </Text>
-                  ) : null}
+              <View key={`${item.name}-${index}`} style={styles.scanItemCard}>
+                <View style={styles.scanItemHeader}>
+                  <View style={{ flex: 1 }}>
+                    <Text style={styles.scanItemName}>{item.name}</Text>
+                    {item.quantity ? (
+                      <Text style={styles.scanItemMeta}>
+                        Qty: {item.quantity}
+                      </Text>
+                    ) : null}
+                  </View>
+                  <Text style={styles.scanItemAmount}>
+                    {formatCurrency(item.total)}
+                  </Text>
                 </View>
-                <Text style={styles.scanItemAmount}>
-                  {formatCurrency(item.total)}
-                </Text>
+
+                <View style={styles.itemParticipantsSection}>
+                  <Text style={styles.itemParticipantsLabel}>
+                    Ikut split bill:
+                  </Text>
+                  <View style={styles.chipGroupWrap}>
+                    {participants.map((person) => {
+                      const active = item.participants.includes(person.id);
+                      return (
+                        <Pressable
+                          key={person.id}
+                          style={[
+                            styles.chipSmall,
+                            active && styles.chipSmallActive,
+                          ]}
+                          onPress={() =>
+                            handleToggleItemParticipant(index, person.id)
+                          }
+                        >
+                          <Text
+                            style={[
+                              styles.chipSmallText,
+                              active && styles.chipSmallTextActive,
+                            ]}
+                          >
+                            {person.name}
+                          </Text>
+                        </Pressable>
+                      );
+                    })}
+                  </View>
+                </View>
               </View>
             ))}
+
+            {scannedAdditionalExpenses.length > 0 && (
+              <>
+                <View style={styles.scanListHeader}>
+                  <View style={{ flexDirection: "row", alignItems: "center" }}>
+                    <Text style={styles.scanListTitle}>
+                      Additional Expenses
+                    </Text>
+                    <View style={styles.scanListCountBadge}>
+                      <Text style={styles.scanListCountText}>
+                        {scannedAdditionalExpenses.length}
+                      </Text>
+                    </View>
+                  </View>
+                  <Text style={styles.scanListTotal}>
+                    Total {formatCurrency(totalAdditionalExpenses)}
+                  </Text>
+                </View>
+
+                {scannedAdditionalExpenses.map((expense, index) => (
+                  <View
+                    key={`${expense.title}-${index}`}
+                    style={[
+                      styles.scanItemCard,
+                      expense.amount < 0 && styles.discountCard,
+                    ]}
+                  >
+                    <View style={styles.scanItemHeader}>
+                      <View style={{ flex: 1 }}>
+                        <Text style={styles.scanItemName}>{expense.title}</Text>
+                      </View>
+                      <Text
+                        style={[
+                          styles.scanItemAmount,
+                          expense.amount < 0 && styles.discountAmount,
+                        ]}
+                      >
+                        {formatCurrency(expense.amount)}
+                      </Text>
+                    </View>
+
+                    <View style={styles.itemParticipantsSection}>
+                      <Text style={styles.itemParticipantsLabel}>
+                        Ikut split bill:
+                      </Text>
+                      <View style={styles.chipGroupWrap}>
+                        {participants.map((person) => {
+                          const active = expense.participants.includes(
+                            person.id
+                          );
+                          return (
+                            <Pressable
+                              key={person.id}
+                              style={[
+                                styles.chipSmall,
+                                active && styles.chipSmallActive,
+                              ]}
+                              onPress={() =>
+                                handleToggleAdditionalExpenseParticipant(
+                                  index,
+                                  person.id
+                                )
+                              }
+                            >
+                              <Text
+                                style={[
+                                  styles.chipSmallText,
+                                  active && styles.chipSmallTextActive,
+                                ]}
+                              >
+                                {person.name}
+                              </Text>
+                            </Pressable>
+                          );
+                        })}
+                      </View>
+                    </View>
+                  </View>
+                ))}
+              </>
+            )}
+
+            {(merchantName || billDate || receiptNumber) && (
+              <View style={styles.billSummaryCard}>
+                <Text style={styles.billSummaryTitle}>Bill untuk:</Text>
+
+                {merchantName && (
+                  <View style={styles.billInfoRow}>
+                    <Text style={styles.billInfoLabel}>Merchant:</Text>
+                    <Text style={styles.billInfoValue}>{merchantName}</Text>
+                  </View>
+                )}
+
+                {billDate && (
+                  <View style={styles.billInfoRow}>
+                    <Text style={styles.billInfoLabel}>Tanggal:</Text>
+                    <Text style={styles.billInfoValue}>{billDate}</Text>
+                  </View>
+                )}
+
+                {receiptNumber && (
+                  <View style={styles.billInfoRow}>
+                    <Text style={styles.billInfoLabel}>No. Struk:</Text>
+                    <Text style={styles.billInfoValue}>{receiptNumber}</Text>
+                  </View>
+                )}
+
+                <View style={styles.billTotalDivider} />
+
+                <View style={styles.billTotalRow}>
+                  <Text style={styles.billTotalLabel}>Grand Total:</Text>
+                  <Text style={styles.billTotalValue}>
+                    {formatCurrency(grandTotal)}
+                  </Text>
+                </View>
+              </View>
+            )}
 
             <Pressable style={styles.saveButton} onPress={handleSaveExpenses}>
               <Text style={styles.saveButtonText}>
@@ -545,7 +895,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 0,
-    minHeight: 150,
+    minHeight: 130,
     borderBottomLeftRadius: 12,
     borderBottomRightRadius: 12,
     overflow: "hidden",
@@ -643,6 +993,16 @@ const styles = StyleSheet.create({
     fontSize: 16,
     fontWeight: "700",
   },
+  scanButtonLoading: {
+    flexDirection: "row",
+    alignItems: "center",
+    gap: 12,
+  },
+  scanButtonLoadingText: {
+    color: "#ffffff",
+    fontSize: 14,
+    fontWeight: "600",
+  },
   disabledButton: {
     opacity: 0.5,
   },
@@ -712,6 +1072,20 @@ const styles = StyleSheet.create({
     borderBottomWidth: 1,
     borderBottomColor: "#e2e8f0",
   },
+  scanItemCard: {
+    backgroundColor: "#f8fafc",
+    borderRadius: 12,
+    padding: 12,
+    borderWidth: 1,
+    borderColor: "#e2e8f0",
+    paddingBottom: 12,
+    gap: 12,
+  },
+  scanItemHeader: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+  },
   scanItemName: {
     color: "#0f172a",
     fontWeight: "600",
@@ -722,6 +1096,93 @@ const styles = StyleSheet.create({
   },
   scanItemAmount: {
     fontWeight: "600",
+  },
+  itemParticipantsSection: {
+    gap: 8,
+  },
+  itemParticipantsLabel: {
+    color: "#64748b",
+    fontSize: 12,
+    fontWeight: "600",
+  },
+  chipSmall: {
+    paddingHorizontal: 10,
+    paddingVertical: 6,
+    borderRadius: 999,
+    borderWidth: 1,
+    borderColor: "#cbd5f5",
+    backgroundColor: "#ffffff",
+  },
+  chipSmallActive: {
+    backgroundColor: "#ede9fe",
+    borderColor: "#8b5cf6",
+  },
+  chipSmallText: {
+    color: "#1f2937",
+    fontSize: 12,
+  },
+  chipSmallTextActive: {
+    color: "#4c1d95",
+  },
+  discountCard: {
+    borderColor: "#22c55e",
+    backgroundColor: "#f0fdf4",
+  },
+  discountAmount: {
+    color: "#22c55e",
+  },
+  billSummaryCard: {
+    backgroundColor: "#eff6ff",
+    borderRadius: 12,
+    padding: 16,
+    // borderWidth: 1,
+    // borderColor: "#3462F3",
+    gap: 6,
+  },
+  billSummaryTitle: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#3462F3",
+    marginBottom: 4,
+  },
+  billInfoRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingVertical: 4,
+  },
+  billInfoLabel: {
+    fontSize: 14,
+    color: "#64748b",
+    fontWeight: "600",
+  },
+  billInfoValue: {
+    fontSize: 14,
+    color: "#0f172a",
+    fontWeight: "600",
+    flex: 1,
+    textAlign: "right",
+  },
+  billTotalDivider: {
+    height: 1,
+    backgroundColor: "#3462F3",
+    marginVertical: 8,
+  },
+  billTotalRow: {
+    flexDirection: "row",
+    justifyContent: "space-between",
+    alignItems: "center",
+    paddingTop: 4,
+  },
+  billTotalLabel: {
+    fontSize: 16,
+    fontWeight: "700",
+    color: "#3462F3",
+  },
+  billTotalValue: {
+    fontSize: 18,
+    fontWeight: "800",
+    color: "#3462F3",
   },
   saveButton: {
     marginTop: 12,

@@ -229,7 +229,7 @@ _Dibuat dengan Split Bill App_`;
       const record = await createSplitBillRecord(payload);
       setSavedRecord(record);
       showSnackbar({
-        message: "Data split bill sudah tersimpan.",
+        message: "Split bill berhasil disimpan.",
         type: "success",
       });
       setShowPostSaveButtons(true);
@@ -302,7 +302,7 @@ _Dibuat dengan Split Bill App_`;
               style={styles.emptyButton}
               onPress={() => router.replace("/expenses")}
             >
-              <Text style={styles.emptyButtonText}>Tambah data sekarang</Text>
+              <Text style={styles.emptyButtonText}>Buat Split Bill</Text>
             </Pressable>
           </View>
         ) : (
@@ -782,7 +782,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 0,
-    minHeight: 140,
+    minHeight: 130,
     borderBottomLeftRadius: 12,
     borderBottomRightRadius: 12,
     overflow: "hidden",
@@ -1215,8 +1215,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   emptyImage: {
-    width: 100,
-    height: 100,
+    width: 80,
+    height: 80,
   },
   emptyTitle: {
     color: "#0f172a",

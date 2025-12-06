@@ -19,6 +19,7 @@ import { SafeAreaView } from "react-native-safe-area-context";
 import { EditExpenseBottomSheet } from "@/components/edit-expense-bottom-sheet";
 import { Poppins } from "@/constants/fonts";
 import { useAuth } from "@/context/auth-context";
+import { useSnackbar } from "@/context/snackbar-context";
 import { useSplitBill } from "@/context/split-bill-context";
 import { useThemeColor } from "@/hooks/use-theme-color";
 import { formatCurrency } from "@/lib/split-bill/format";
@@ -29,8 +30,10 @@ export default function ExpensesScreen() {
   const router = useRouter();
   const navigation = useNavigation();
   const { isAuthenticated } = useAuth();
+  const { showSnackbar } = useSnackbar();
   const {
-    participants,
+    participants: allParticipants,
+    selectedParticipantIds,
     expenses,
     additionalExpenses,
     addExpense,
@@ -39,6 +42,12 @@ export default function ExpensesScreen() {
     updateActivityName,
     updateExpense, // Add updateExpense here
   } = useSplitBill();
+
+  // Filter participants based on selection
+  const participants = useMemo(() => {
+    if (selectedParticipantIds.length === 0) return allParticipants;
+    return allParticipants.filter((p) => selectedParticipantIds.includes(p.id));
+  }, [allParticipants, selectedParticipantIds]);
 
   const background = useThemeColor({}, "background");
   const card = useThemeColor({}, "card");
@@ -122,6 +131,11 @@ export default function ExpensesScreen() {
       participants: selectedParticipants,
     });
 
+    showSnackbar({
+      message: `Berhasil menambahkan "${description.trim()}"`,
+      type: "success",
+    });
+
     resetForm();
   };
 
@@ -142,7 +156,19 @@ export default function ExpensesScreen() {
   const handleSaveActivity = (newActivityName: string) => {
     updateActivityName(newActivityName);
     setBottomSheetVisible(false);
+    showSnackbar({
+      message: "Split bill berhasil dibagi! Siap untuk direview 🚀",
+      type: "success",
+    });
     router.push("/summary");
+  };
+
+  const handleDeleteExpense = (expense: Expense) => {
+    removeExpense(expense.id);
+    showSnackbar({
+      message: `Berhasil menghapus "${expense.description}"`,
+      type: "success",
+    });
   };
 
   return (
@@ -241,7 +267,7 @@ export default function ExpensesScreen() {
               />
             </View>
 
-            {!hasParticipants ? (
+            {isAuthenticated && !hasParticipants ? (
               <Pressable
                 style={[
                   styles.participantEmptyState,
@@ -440,7 +466,7 @@ export default function ExpensesScreen() {
                 proporsi pengeluaran
               </Text>
             </View>
-            {additionalExpenses.length > 0 ? (
+            {additionalExpenses.length > 0 && (
               <View
                 style={[styles.additionalBadge, { backgroundColor: primary }]}
               >
@@ -448,7 +474,7 @@ export default function ExpensesScreen() {
                   {additionalExpenses.length}
                 </Text>
               </View>
-            ) : null}
+            )}
           </Pressable>
 
           <View style={[styles.card, { backgroundColor: card }]}>
@@ -566,7 +592,7 @@ export default function ExpensesScreen() {
                           <MaterialIcons name="edit" size={16} color={tint} />
                         </Pressable>
                         <Pressable
-                          onPress={() => removeExpense(item.id)}
+                          onPress={() => handleDeleteExpense(item)}
                           style={[
                             styles.deleteButtonIcon,
                             { backgroundColor: hexToRgba(error, 0.2) },
@@ -629,6 +655,10 @@ export default function ExpensesScreen() {
             paidBy: updatedExpense.paidBy,
             participants: updatedExpense.participants,
           });
+          showSnackbar({
+            message: `Berhasil mengupdate "${updatedExpense.description}"`,
+            type: "success",
+          });
           setEditExpenseSheetVisible(false);
           setEditingExpense(null);
         }}
@@ -647,12 +677,11 @@ const styles = StyleSheet.create({
   container: {
     padding: 8,
     gap: 18,
-    paddingTop: 130,
+    paddingTop: 140,
   },
   heroWrapper: {
     position: "relative",
     zIndex: 1,
-    marginBottom: 16,
   },
   topHero: {
     padding: 20,
@@ -664,7 +693,7 @@ const styles = StyleSheet.create({
     left: 0,
     right: 0,
     zIndex: 0,
-    minHeight: 150,
+    minHeight: 140,
     borderBottomLeftRadius: 12,
     borderBottomRightRadius: 12,
     overflow: "hidden",
@@ -697,7 +726,7 @@ const styles = StyleSheet.create({
   },
   belowHero: {
     position: "absolute",
-    bottom: -34,
+    bottom: -20,
     left: 0,
     right: 0,
     borderTopLeftRadius: 12,
@@ -942,8 +971,8 @@ const styles = StyleSheet.create({
     alignItems: "center",
   },
   emptyImage: {
-    width: 100,
-    height: 100,
+    width: 80,
+    height: 80,
   },
   emptyTitle: {
     fontSize: 16,
